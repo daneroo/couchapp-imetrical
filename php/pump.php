@@ -36,7 +36,7 @@ function putCouch($key,$o){
 //putCouch(123,array("data"=>"Bar"));
  
   
-$numDays=2000;
+$numDays=1040;
 $today = beginDay(time());
 echo "today=".date($DAYFMT,$today)."\n";
 while ($numDays>=0) {
