@@ -20,52 +20,75 @@ function putCouch($key,$o){
   global $couch;
   $db = "imetrical";
   $resp = $couch->send("PUT", "/$db/$key", json_encode($o)); 
-  var_dump($resp); // string(42) "{"ok":true,"id":"123","rev":"2039697587"}"
+  //var_dump($resp); // string(42) "{"ok":true,"id":"123","rev":"2039697587"}"
   $c = json_decode($resp,true);
-  if ($c["error"]=="conflict") {
+  if (isset($c["error"]) && $c["error"]=="conflict") {
     $resp = $couch->send("GET", "/$db/$key"); 
     $g = json_decode($resp,true);
     $o["_rev"] = $g["_rev"];
-    var_dump($resp); // string(47) "{"_id":"123","_rev":"2039697587","data":"Foo"}" 
+    //var_dump($resp); // string(47) "{"_id":"123","_rev":"2039697587","data":"Foo"}" 
     $resp = $couch->send("PUT", "/$db/$key", json_encode($o)); 
-    var_dump($resp); // string(42) "{"ok":true,"id":"123","rev":"2039697587"}"
+    //var_dump($resp); // string(42) "{"ok":true,"id":"123","rev":"2039697587"}"
+    echo "updated  $key\n";  
+  } else {
+    echo "inserted $key\n";  
   }
 }
 
 //putCouch(123,array("data"=>"Foo"));
 //putCouch(123,array("data"=>"Bar"));
  
-  
-$numDays=1040;
+//$grain="watt_hour";
+//$grain="watt_minute";
+//$grain="watt_tensec";
+$grain="watt";
+$numDays=365;
 $today = beginDay(time());
 echo "today=".date($DAYFMT,$today)."\n";
 while ($numDays>=0) {
     $day = beginDay($today,$numDays);
     $dayStamp=date($DAYFMT,$day);
-    echo "today-".$numDays." : ".$dayStamp."\n";
+    echo "-today-".$numDays." : ".$dayStamp."\n";
 
-    $u="$baseURI?offset=$numDays&table=watt_hour";
+    $u="$baseURI?offset=$numDays&table=$grain";
     $jsonD =  file_get_contents($u);
     $data = json_decode($jsonD,true);
-    
-    $document = array(
-      "owner"=>"daniel",
-      "scope"=>"hour",
-      "stamp"=>$dayStamp,
-      "data"=>$data
-    );
-    
-    print_r($document);
-    echo "\n";
-    
-    putCouch("daniel_$dayStamp",$document);
+
+    $scope="hour";
+    if ($scope=="day"){
+        $document = array(
+          "owner"=>"daniel",
+          "scope"=>"day",
+          "stamp"=>$dayStamp,
+          "data"=>$data
+        );
+        //putCouch("daniel_$dayStamp",$document);
+    } else if ($scope=="hour"){
+        $dataByHour=array();
+        foreach ($data as $datum){
+            $stamp =  $datum["stamp"];
+            $HH = substr($stamp,11,2);
+            if (!isset($dataByHour[$HH])){
+                $dataByHour[$HH]=array();
+            }
+            array_push($dataByHour[$HH],$datum);
+        }
+        foreach ($dataByHour as $HH => $dataForHour){
+            $hourStamp=$dayStamp."T".$HH;
+            echo "  $hourStamp\n"; 
+            $document = array(
+              "owner"=>"daniel",
+              "scope"=>"hour",
+              "stamp"=>$hourStamp,
+              "data"=>$dataForHour
+            );
+            putCouch("daniel_$hourStamp",$document);
+        }
+    }
+
      
     $numDays--;
     
 }
-
-
-//$p = date_parse(date($DAYFMT,$day));
-//$p = date_parse("2006-13-23");
 
 ?>
