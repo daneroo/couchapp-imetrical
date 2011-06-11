@@ -1,6 +1,6 @@
 # pumping out the data 
 
- This script goes into cantor:/varwww/iMetrical/getJSON.php
+ This script goes into cantor:/var/www/iMetrical/getJSON.php
  
     scp -p getJSONForDay.php root@192.168.5.2:/var/www/iMetrical/
  
