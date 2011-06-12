@@ -5,6 +5,8 @@ require 'date'
 require 'im_util'
 require 'benchmark'
 require 'digest/sha1'
+require 'uri'
+require 'net/http'
 
 db = IM::couchdb()
 
@@ -25,3 +27,25 @@ Date.today.downto(IM::EPOCH) do |d|
 end
 
 puts "dt:now "+DateTime::now.to_s
+
+baseURI = "http://192.168.5.2/iMetrical/getJSONForDay.php";
+table="watt"; # watt_minute
+((Date.today-10)..Date.today).each do |d|
+  url = "#{baseURI}?day=#{d}&table=#{table}"
+  r = Net::HTTP.get_response( URI.parse( url ) )
+  json = r.body
+  data = JSON.parse(json)
+  puts "#{d}  #{json.length} #{data.length}"
+  #puts JSON.pretty_generate(data)
+  #puts data.inspect
+end
+
+#[
+#  {
+#    "watt": "1155",
+#    "stamp": "2011-06-11T00:00:00Z"
+#  },
+#  {
+#    "watt": "1161",
+#    "stamp": "2011-06-11T00:01:00Z"
+#  },
