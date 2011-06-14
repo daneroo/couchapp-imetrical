@@ -9,10 +9,10 @@ require 'uri'
 require 'net/http'
 
 #IM.rl_encode([1,2,3,4,5,6,7])
-v=[1,2,3,3,3,3,7]
-rl=IM.rl_encode(v)
+v=[1,2,3,3,3,3,7,5,6,8,6,5,4,nil,4,5,nil]
+delta=IM.delta_encode(v)
 puts v.inspect
-puts rl.inspect
+puts delta.inspect
 #Process.exit
 
 db = IM::couchdb()
@@ -46,18 +46,33 @@ puts sprintf("%22s %10s %8s %8s %5s",'date','method','samples','size','ratio')
   #  w = w ? w.to_i : w
   #  puts "watt%10!=0 #{w} : #{ (w % 10) }" if w!=nil && (w % 10)!=0
   #end
-  #canonical["values"]=canonical["values"].collect {|w| w ? w.to_i : w }
+  
+  # V10
+  canonical["values"]=canonical["values"].collect {|w| w!=nil ? w.to_i/10 : w }
 
+  canonical["_id"] = "daniel.#{d_str}"
   json_canonical = JSON.generate(canonical)
   ratio = json_raw.length*1.0/json_canonical.length
   puts sprintf("%22s %10s %8d %8d", d_str,'raw',raw.length,json_raw.length)
   puts sprintf("%22s %10s %8d %8d %5.2f", d_str,'canonical',canonical["values"].length,json_canonical.length,ratio)
+
+  #canonical["values"]=IM.delta_encode(canonical["values"])
+  #json_canonical = JSON.generate(canonical)
+  #ratio = json_raw.length*1.0/json_canonical.length
+  #puts sprintf("%22s %10s %8d %8d %5.2f", d_str,'delta',canonical["values"].length,json_canonical.length,ratio)
+
   canonical["values"]=IM.rl_encode(canonical["values"])
   json_canonical = JSON.generate(canonical)
   ratio = json_raw.length*1.0/json_canonical.length
-  puts sprintf("%22s %10s %8d %8d %5.2f", d_str,'runlength',canonical["values"].length,json_canonical.length,ratio)
+  puts sprintf("%22s %10s %8d %8d %5.2f", d_str,'RL',canonical["values"].length,json_canonical.length,ratio)
 
-  canonical["_id"] = "daniel.#{d_str}"
-  #db.save_doc(canonical)
+  canonical["values"]=[]
+  rsp = db.save_doc(canonical)
+  doc  = db.get( rsp[ 'id' ] )
+  #-- add an attachment
+  rslt = doc.put_attachment( 'V10RL.json', json_canonical, { "content_type"=>"application/json"} )
+  puts 'attachment: ', rslt
+
+  #puts json_canonical
   
 end

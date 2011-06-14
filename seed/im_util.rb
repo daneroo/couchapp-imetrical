@@ -5,7 +5,8 @@ module IM
   def IM.couchdb()
     appName='imetrical' # lookup .in ~/.couchapp.conf
     credentials = JSON.parse(File.open(ENV['HOME']+"/.couchapp.conf", "rb").read )
-    puts credentials['env'][appName].inspect
+    #puts credentials['env'][appName].inspect
+    puts "Connected to #{appName}"
     return CouchRest.database!(credentials['env'][appName]['db'])
   end  
 
@@ -48,6 +49,17 @@ module IM
       end
       puts "Encoded #{encoded.inspect}"  if verbose
       #puts "Remaining #{values.inspect}}"
+    end
+    return encoded
+  end
+
+  def IM.delta_encode(values,verbose=false)
+    # [x,y,z,a,b,c] -> [x,y-x,z-y]
+    prev=nil
+    encoded=values.collect do |w|
+       r = w==nil ? nil : ( prev!=nil ? w-prev : w )
+       prev=w
+       r
     end
     return encoded
   end
