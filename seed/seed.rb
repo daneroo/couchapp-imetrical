@@ -32,8 +32,8 @@ end
 baseURI = "http://192.168.5.2/iMetrical/getJSONForDay.php";
 table="watt"; # watt,watt_tensec,watt_minute,watt_hour
 grain=1
-puts sprintf("%25s %8s %8s", 'date','samples','size')
-((Date.today-1)..Date.today-1).each do |d|
+puts sprintf("%25s %8s %8s %8s %8s", 'date','samples','size','samples\'','size\'')
+((Date.today-10)..Date.today-1).each do |d|
   dt=DateTime.jd(d.jd)
   today_t = dt.to_gm_time
   today_str=today_t.strftime"%Y-%m-%dT%H:%M:%SZ"
@@ -74,24 +74,27 @@ puts sprintf("%25s %8s %8s", 'date','samples','size')
       puts "stamp->watt has #{stamp_to_watt.length} values"
     end
   end
-  puts "iterated in #{itertime}s"
-  puts JSON.generate(nudata).length
+  #puts "iterated in #{itertime}s"
+  #puts JSON.generate(nudata).length
 
-  nudata["values"]=[]  
-  puts sprintf("%25s %8d %8d", dt,data.length,json.length)
-  parsetime = Benchmark.realtime do
-    data.each do |pair|
-      t=DateTime.strptime(pair["stamp"]).to_gm_time
-      idx = (t-today_t).to_i / grain
-      #pair["t"] = t.strftime"%Y-%m-%dT%H:%M:%SZ"
-      #pair["idx"]=idx
-      nudata["values"][idx]=pair["watt"]
-      #puts pair.inspect
-      #break
+  if false
+    nudata["values"]=[]  
+    parsetime = Benchmark.realtime do
+      data.each do |pair|
+        t=DateTime.strptime(pair["stamp"]).to_gm_time
+        idx = (t-today_t).to_i / grain
+        #pair["t"] = t.strftime"%Y-%m-%dT%H:%M:%SZ"
+        #pair["idx"]=idx
+        nudata["values"][idx]=pair["watt"]
+        #puts pair.inspect
+        #break
+      end
     end
+    puts "parsed in #{parsetime}s"
+    puts JSON.generate(nudata).length
   end
-  puts "parsed in #{parsetime}s"
-  puts JSON.generate(nudata).length
   #puts JSON.pretty_generate(nudata)
   #puts nudata.inspect
+
+  puts sprintf("%25s %8d %8d %8d %8d", dt,data.length,json.length,nudata["values"].length,JSON.generate(nudata).length)
 end
