@@ -17,7 +17,32 @@ Credentials are in `~/.couchapp.conf`.
     V10           - doc/day  -  100216930 bytes/365  docs :  95M ratio: 17.3
     V10+RL        - doc/day  -   38056034 bytes/365  docs :  36M ratio: 45.0
     V10+delta+RL  - doc/day  -   47861858 bytes/365  docs :  44M ratio: 36.0
-    
+
+## Measuring
+
+Map
+
+    function(doc) {
+      if (doc._attachments)
+      for (var k in doc._attachments) {
+        emit(k, doc._attachments[k].length);
+      } 
+    }
+    // or
+    function(doc) {
+      if (doc._attachments)
+      for (var k in doc._attachments) {
+        emit([k,"count"], 1);
+        emit([k,"length"], doc._attachments[k].length);
+      } 
+    }
+
+Reduce    
+
+    function (key, values, rereduce) {
+        return sum(values);
+    }
+
 ## Mysql sources
 
     mysql> select min(stamp),max(stamp) from watt;
