@@ -30,6 +30,28 @@ module IM
     db.bulk_save(docs)
   end
   
+  def IM.rl_encode(values,verbose=false)
+    # [0,0,x,y,...] -> [[2,0],x,y,..]
+    encoded=[]
+    while values!=nil && values.length>0
+      puts "Remaining #{values.inspect}}"  if verbose
+      head = values[0]
+      run = values.take_while {|v| v==head }
+      values = values.slice(run.length,values.length-run.length)
+      rl = [[run.length,head]]
+      if JSON.generate(rl).length<JSON.generate(run).length
+        puts "  --RLE #{run.inspect} > #{rl.inspect}" if verbose
+        encoded.concat(rl)
+      else
+        puts "  ++ORG #{run.inspect} < #{rl.inspect}"  if verbose
+        encoded.concat(run)
+      end
+      puts "Encoded #{encoded.inspect}"  if verbose
+      #puts "Remaining #{values.inspect}}"
+    end
+    return encoded
+  end
+  
   # [{w,s},{w,s}] (to {w:s,w:s}) to {s,[w,w,w,w]}
   def IM.raw_to_canonical(start8601_str,raw,seconds_per_sample=1,verbose=false)
     asssumed_seconds_duration=86400

@@ -10,6 +10,10 @@ Credentials are in `~/.couchapp.conf`.
 
     couchapp push . imetrical
 
+## Compact representation
+          Raw - doc/hour - 1741938786 bytes/7574 docs : 1.6G
+    Canonical - doc/day  -  263159906 bytes/365  docs : 251M ratio:6.6
+
 ## Mysql sources
 
     mysql> select min(stamp),max(stamp) from watt;
