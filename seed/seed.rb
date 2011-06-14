@@ -30,7 +30,8 @@ if false
 end
 
 baseURI = "http://192.168.5.2/iMetrical/getJSONForDay.php";
-table="watt_minute"; # watt,watt_tensec,watt_minute,watt_hour
+table="watt"; # watt,watt_tensec,watt_minute,watt_hour
+grain=1
 puts sprintf("%25s %8s %8s", 'date','samples','size')
 ((Date.today-1)..Date.today-1).each do |d|
   dt=DateTime.jd(d.jd)
@@ -45,16 +46,43 @@ puts sprintf("%25s %8s %8s", 'date','samples','size')
     "stamp" => today_str,
     "values" =>[],
   }
+  
   # Speedup :
   # convert [{w,s},{w,s}] to {w:s,w:s}
   # (0.86400).each {|idx| fmt_and_lookup_and_remove_instead_of_parse}
   #  check no duplicates (can't cause of mysql index on stamp)
   #  check no unremoved key in converted hash...
+  
+  itertime = Benchmark.realtime do
+    stamp_to_watt = {}
+    data.each do |pair|
+      stamp_to_watt[pair["stamp"]]=pair["watt"]
+    end
+    (today_t...today_t+86400).step(grain).each do |t|
+      t_str=t.strftime"%Y-%m-%dT%H:%M:%SZ"
+      idx = (t-today_t).to_i / (grain)
+      #w = stamp_to_watt[t_str]
+      # simultaneous lookup and delete
+      w = stamp_to_watt.delete(t_str)
+      if w==nil
+        #puts "!found #{t_str}: #{w}"        
+      end  
+      nudata["values"][idx]=w
+    end
+    # check that all values were removed
+    if !stamp_to_watt.empty?
+      puts "stamp->watt has #{stamp_to_watt.length} values"
+    end
+  end
+  puts "iterated in #{itertime}s"
+  puts JSON.generate(nudata).length
+
+  nudata["values"]=[]  
   puts sprintf("%25s %8d %8d", dt,data.length,json.length)
   parsetime = Benchmark.realtime do
     data.each do |pair|
       t=DateTime.strptime(pair["stamp"]).to_gm_time
-      idx = (t-today_t).to_i 
+      idx = (t-today_t).to_i / grain
       #pair["t"] = t.strftime"%Y-%m-%dT%H:%M:%SZ"
       #pair["idx"]=idx
       nudata["values"][idx]=pair["watt"]
@@ -62,18 +90,8 @@ puts sprintf("%25s %8s %8s", 'date','samples','size')
       #break
     end
   end
-  puts "parsed in #{parsetime}"
-  #puts JSON.generate(nudata)
+  puts "parsed in #{parsetime}s"
+  puts JSON.generate(nudata).length
   #puts JSON.pretty_generate(nudata)
   #puts nudata.inspect
 end
-
-#[
-#  {
-#    "watt": "1155",
-#    "stamp": "2011-06-11T00:00:00Z"
-#  },
-#  {
-#    "watt": "1161",
-#    "stamp": "2011-06-11T00:01:00Z"
-#  },
