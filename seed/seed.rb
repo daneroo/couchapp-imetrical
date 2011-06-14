@@ -41,6 +41,13 @@ puts sprintf("%22s %10s %8s %8s %5s",'date','method','samples','size','ratio')
   json_raw = resp.body
   raw = JSON.parse(json_raw)
   canonical=IM.raw_to_canonical(d_str,raw,grain,false)
+  
+  #canonical["values"].each do |w|
+  #  w = w ? w.to_i : w
+  #  puts "watt%10!=0 #{w} : #{ (w % 10) }" if w!=nil && (w % 10)!=0
+  #end
+  #canonical["values"]=canonical["values"].collect {|w| w ? w.to_i : w }
+
   json_canonical = JSON.generate(canonical)
   ratio = json_raw.length*1.0/json_canonical.length
   puts sprintf("%22s %10s %8d %8d", d_str,'raw',raw.length,json_raw.length)
@@ -51,6 +58,6 @@ puts sprintf("%22s %10s %8s %8s %5s",'date','method','samples','size','ratio')
   puts sprintf("%22s %10s %8d %8d %5.2f", d_str,'runlength',canonical["values"].length,json_canonical.length,ratio)
 
   canonical["_id"] = "daniel.#{d_str}"
-  db.save_doc(canonical)
+  #db.save_doc(canonical)
   
 end

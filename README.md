@@ -11,8 +11,9 @@ Credentials are in `~/.couchapp.conf`.
     couchapp push . imetrical
 
 ## Compact representation
-          Raw - doc/hour - 1741938786 bytes/7574 docs : 1.6G
-    Canonical - doc/day  -  263159906 bytes/365  docs : 251M ratio:6.6
+    Raw       - doc/hour - 1741938786 bytes/7574 docs : 1.6G
+    Canonical - doc/day  -  263159906 bytes/365  docs : 251M ratio: 6.6
+    Runlength - doc/day  -  105803874 bytes/365  docs : 100M ratio:16.4
 
 ## Mysql sources
 
