@@ -1,7 +1,6 @@
 require 'date'
 module IM
-  #EPOCH 2008-07-30T00:04:40Z
-  EPOCH=Date.parse('2008-07-30 00:04:40') #Apr-30-1999
+  FMT8601 = "%Y-%m-%dT%H:%M:%SZ"
   
   def IM.couchdb()
     appName='imetrical' # lookup .in ~/.couchapp.conf
@@ -31,6 +30,65 @@ module IM
     db.bulk_save(docs)
   end
   
+  # [{w,s},{w,s}] (to {w:s,w:s}) to {s,[w,w,w,w]}
+  def IM.raw_to_canonical(start8601_str,raw,seconds_per_sample=1,verbose=false)
+    asssumed_seconds_duration=86400
+    start_t=DateTime.strptime(start8601_str).to_gm_time
+    start_str=start_t.strftime(FMT8601)
+    
+    canonical = {
+      "stamp" => start_str,
+      "grain" => seconds_per_sample,
+      "values" =>[]
+    }
+
+    # convert [{w,s},{w,s}] to {w:s,w:s}
+    stamp_to_watt = {}
+    raw.each do |pair|
+      #  no duplicates possible because of source (can't cause of mysql index on stamp)
+      stamp_to_watt[pair["stamp"]]=pair["watt"]
+    end
+    
+    # (for each second offset in day).each {|idx| fmt_and_lookup_and_remove_instead_of_parse}
+    (start_t...start_t+asssumed_seconds_duration).step(seconds_per_sample).each do |t|
+      t_str=t.strftime(FMT8601)
+      idx = (t-start_t).to_i / seconds_per_sample
+      w = stamp_to_watt.delete(t_str)
+      if w==nil && verbose
+        puts "!found #{t_str}: #{w}"        
+      end  
+      canonical["values"][idx]=w
+    end
+      
+    # check that all values were removed/used
+    # throw an error ??
+    if !stamp_to_watt.empty?
+      puts "stamp->watt has #{stamp_to_watt.length} values"
+    end
+
+    return canonical
+  end
+  
+  # [{w,s},{w,s}] to {s,[w,w,w,w]}
+  def IM.raw_to_canonical_byparse(start8601_str,raw,seconds_per_sample=1,verbose=false)
+    start_t=DateTime.strptime(start8601_str).to_gm_time
+    start_str=start_t.strftime(FMT8601)
+    
+    canonical = {
+      "stamp" => start_str,
+      "grain" => seconds_per_sample,
+      "values" =>[]
+    }
+
+    # convert [{w,s},{w,s}] to {w:s,w:s}
+    raw.each do |pair|
+      t=DateTime.strptime(pair["stamp"]).to_gm_time
+      idx = (t-start_t).to_i / seconds_per_sample
+      canonical["values"][idx]=pair["watt"]
+    end
+    return canonical
+  end
+  
   class Util
     def initialize
       puts "Util object created"
@@ -38,6 +96,7 @@ module IM
   end
 end
   
+# monkey patch for time conversion - from OReily Cookbook 3.9  
 class Date
   def to_gm_time
     to_time(new_offset, :gm)
