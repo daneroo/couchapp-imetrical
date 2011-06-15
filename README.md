@@ -11,12 +11,14 @@ Credentials are in `~/.couchapp.conf`.
     couchapp push . imetrical
 
 ## Compact representation
-    Raw           - doc/hour - 1741938786 bytes/7574 docs : 1.6G
-    Canonical     - doc/day  -  263159906 bytes/365  docs : 251M ratio:  6.6
-    Runlength     - doc/day  -  105803874 bytes/365  docs : 100M ratio: 16.4
-    V10           - doc/day  -  100216930 bytes/365  docs :  95M ratio: 17.3
-    V10+RL        - doc/day  -   38056034 bytes/365  docs :  36M ratio: 45.0
-    V10+delta+RL  - doc/day  -   47861858 bytes/365  docs :  44M ratio: 36.0
+    Raw/hour      - 1741938786 : 1.6G
+    Canonical     -  263159906 : 251M ratio:  6.6
+    Runlength     -  105803874 : 100M ratio: 16.4
+    V10           -  100216930 :  95M ratio: 17.3
+    V10+RL        -   38056034 :  36M ratio: 45.0
+    V10+delta+RL  -   47861858 :  44M ratio: 36.0
+    --attachment
+    V10+RL+atach  -   disk:10100834/46217380:  9.6M ratio: 172.0
 
 ## Measuring
 

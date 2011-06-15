@@ -31,25 +31,39 @@ module IM
     db.bulk_save(docs)
   end
   
+  def IM.append_shorter(encoded,rl,run,verbose=false)
+    if JSON.generate([rl]).length<JSON.generate(run).length
+      puts "  --RLE #{run.inspect} > #{[rl].inspect}" if verbose
+      encoded << rl      
+    else
+      puts "  ++ORG #{run.inspect} < #{[rl].inspect}"  if verbose
+      encoded.concat(run)
+    end
+  end
   def IM.rl_encode(values,verbose=false)
     # [0,0,x,y,...] -> [[2,0],x,y,..]
     encoded=[]
-    while values!=nil && values.length>0
-      puts "Remaining #{values.inspect}}"  if verbose
-      head = values[0]
-      run = values.take_while {|v| v==head }
-      values = values.slice(run.length,values.length-run.length)
-      rl = [[run.length,head]]
-      if JSON.generate(rl).length<JSON.generate(run).length
-        puts "  --RLE #{run.inspect} > #{rl.inspect}" if verbose
-        encoded.concat(rl)
+    head=-99999999 # impossible
+    rl=[0,head]
+    run=[]
+    values.each do |v|
+      if v==head
+        rl[0]+=1
+        run << head
       else
-        puts "  ++ORG #{run.inspect} < #{rl.inspect}"  if verbose
-        encoded.concat(run)
+        #flush
+        IM.append_shorter(encoded,rl,run,verbose) if rl[0]>0
+        puts "Encoded #{encoded.inspect}"  if verbose
+        #reset
+        head=v
+        rl=[1,head]
+        run=[v]
       end
-      puts "Encoded #{encoded.inspect}"  if verbose
-      #puts "Remaining #{values.inspect}}"
     end
+    # flush last time
+    IM.append_shorter(encoded,rl,run,verbose) if rl[0]>0
+    puts "Encoded #{encoded.inspect}"  if verbose
+    puts "--------------------------------------" if verbose
     return encoded
   end
 
