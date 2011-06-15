@@ -22,6 +22,8 @@ Credentials are in `~/.couchapp.conf`.
     V10+RL+atach       10100834/46217380:  9.6M ratio: 172.0/37.0
     V10+RL+D-atach      6971490/39558963:  6.6M ratio: 249.9/44
     V10P3+RL+D-atach    6869090/35845778:  6.6M ratio: 253.6/48.6
+    -- whole history 1050 Documents 
+    V10P3+RL+D-atach    21,151,842/112,471,842:  20.6M ratio: 253.6/48.6
 
 
 ## Mysql sources
