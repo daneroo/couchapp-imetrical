@@ -1,6 +1,7 @@
 require 'date'
 module IM
   FMT8601 = "%Y-%m-%dT%H:%M:%SZ"
+  EPOCH = Date.parse("2008-07-30")
   
   def IM.couchdb()
     appName='imetrical' # lookup .in ~/.couchapp.conf

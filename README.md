@@ -10,40 +10,19 @@ Credentials are in `~/.couchapp.conf`.
 
     couchapp push . imetrical
 
-## Compact representation
-    Raw/hour      - 1741938786 : 1.6G
-    Canonical     -  263159906 : 251M ratio:  6.6
-    Runlength     -  105803874 : 100M ratio: 16.4
-    V10           -  100216930 :  95M ratio: 17.3
-    V10+RL        -   38056034 :  36M ratio: 45.0
-    V10+delta+RL  -   47861858 :  44M ratio: 36.0
-    --attachment
-    V10+RL+atach  -   disk:10100834/46217380:  9.6M ratio: 172.0
+## Entropy Coding - Compact representation
+    Raw/hour         1741938786 : 1.6G ratio:  1.0
+    Canonical         263159906 : 251M ratio:  6.6
+    Runlength         105803874 : 100M ratio: 16.4
+    V10               100216930 :  95M ratio: 17.3
+    V10+RL             38056034 :  36M ratio: 45.0
+    V10+delta+RL       47861858 :  44M ratio: 36.0
+    --attachments Gzip Compreession on disk not on reported size
+    --so two numbers are disk/reported size
+    V10+RL+atach       10100834/46217380:  9.6M ratio: 172.0/37.0
+    V10+RL+D-atach      6971490/39558963:  6.6M ratio: 249.9/44
+    V10P3+RL+D-atach    6869090/35845778:  6.6M ratio: 253.6/48.6
 
-## Measuring
-
-Map
-
-    function(doc) {
-      if (doc._attachments)
-      for (var k in doc._attachments) {
-        emit(k, doc._attachments[k].length);
-      } 
-    }
-    // or
-    function(doc) {
-      if (doc._attachments)
-      for (var k in doc._attachments) {
-        emit([k,"count"], 1);
-        emit([k,"length"], doc._attachments[k].length);
-      } 
-    }
-
-Reduce    
-
-    function (key, values, rereduce) {
-        return sum(values);
-    }
 
 ## Mysql sources
 

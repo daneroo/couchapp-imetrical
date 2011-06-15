@@ -34,7 +34,8 @@ end
 baseURI = "http://192.168.5.2/iMetrical/getJSONForDay.php";
 table="watt"; # watt,watt_tensec,watt_minute,watt_hour
 grain=1
-((Date.today-365)..Date.today-1).each do |d_d|
+#((Date.today-365)..Date.today-1).each do |d_d|
+(IM::EPOCH..Date.today-1).each do |d_d|
   d_dt=DateTime.jd(d_d.jd)
   d_t = d_dt.to_gm_time
   d_str=d_t.strftime(IM::FMT8601)
@@ -77,11 +78,17 @@ grain=1
   
 
     x.report("delta") do
-      #canonical["values"]=IM.delta_encode(canonical["values"])
-      #json_canonical = JSON.generate(canonical)
-      #ratio = json_raw.length*1.0/json_canonical.length
-      #puts sprintf("%22s %10s %8d %8d %5.2f", d_str,'delta',canonical["values"].length,json_canonical.length,ratio)
-      nada = "No delta"
+      canonical["values"]=IM.delta_encode(canonical["values"])
+    end
+    x.report("P3") do
+      # some value are not  val%10==0
+      canonical["values"]=canonical["values"].collect {|w| w!=nil ? w.to_i+3 : w }
+    end
+    x.report("json-v10") do
+      json_canonical = JSON.generate(canonical)
+      ratio = json_raw.length*1.0/json_canonical.length
+      results.concat([['Delta',canonical["values"].length,json_canonical.length,ratio]])
+      #nada = "No delta"
     end
 
     x.report("RL") do
