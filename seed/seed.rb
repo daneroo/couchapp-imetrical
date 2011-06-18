@@ -34,8 +34,19 @@ end
 baseURI = "http://192.168.5.2/iMetrical/getJSONForDay.php";
 table="watt"; # watt,watt_tensec,watt_minute,watt_hour
 grain=1
+
+def report(x,name,canonical,json_raw,results)
+  #x.report('json-'+name) do
+  #...
+  #end
+  json_canonical = JSON.generate(canonical)
+  ratio = json_raw.length*1.0/json_canonical.length
+  results.concat([[name,canonical["values"].length,json_canonical.length,ratio]])
+end
+
 #((Date.today-365)..Date.today-1).each do |d_d|
-(IM::EPOCH..Date.today-1).each do |d_d|
+((Date.today-1)..Date.today-1).each do |d_d|
+#(IM::EPOCH..Date.today-1).each do |d_d|
   d_dt=DateTime.jd(d_d.jd)
   d_t = d_dt.to_gm_time
   d_str=d_t.strftime(IM::FMT8601)
@@ -56,25 +67,15 @@ grain=1
     canonical=nil
     x.report("canonical") do
       canonical=IM.raw_to_canonical(d_str,raw,grain,false)
-    end
-  
-    json_canonical=nil
-    x.report("json-can") do
-      json_canonical = JSON.generate(canonical)
-      ratio = json_raw.length*1.0/json_canonical.length
-      results.concat([['canonical',canonical["values"].length,json_canonical.length,ratio]])
-    end
+    end  
+    report(x,'canonical',canonical,json_raw,results)
   
   
     x.report("V10") do
       # some value are not  val%10==0
       canonical["values"]=canonical["values"].collect {|w| w!=nil ? w.to_i/10 : w }
     end
-    x.report("json-v10") do
-      json_canonical = JSON.generate(canonical)
-      ratio = json_raw.length*1.0/json_canonical.length
-      results.concat([['V10',canonical["values"].length,json_canonical.length,ratio]])
-    end
+    report(x,'V10',canonical,json_raw,results)
   
 
     x.report("delta") do
@@ -84,21 +85,12 @@ grain=1
       # some value are not  val%10==0
       canonical["values"]=canonical["values"].collect {|w| w!=nil ? w.to_i+3 : w }
     end
-    x.report("json-v10") do
-      json_canonical = JSON.generate(canonical)
-      ratio = json_raw.length*1.0/json_canonical.length
-      results.concat([['Delta',canonical["values"].length,json_canonical.length,ratio]])
-      #nada = "No delta"
-    end
+    report(x,'D-P3',canonical,json_raw,results)
 
     x.report("RL") do
       canonical["values"]=IM.rl_encode(canonical["values"])
     end
-    x.report("json-RL") do
-      json_canonical = JSON.generate(canonical)
-      ratio = json_raw.length*1.0/json_canonical.length
-      results.concat([['RL',canonical["values"].length,json_canonical.length,ratio]])
-    end
+    report(x,'RL',canonical,json_raw,results)
 
     x.report("write w/attach") do
       canonical["values"]=[]
@@ -109,9 +101,9 @@ grain=1
       doc.put_attachment( 'V10RL.json', json_canonical, { "content_type"=>"application/json"} )
     end
 
-    puts sprintf("%22s %10s %8s %8s %5s",'date','method','samples','size','ratio')
+    puts sprintf("%22s %10s %8s %8s %7s",'date','method','samples','size','ratio')
     results.each do |r|
-      puts sprintf("%22s %10s %8d %8d %5.2f", d_str,r[0],r[1],r[2],r[3])
+      puts sprintf("%22s %10s %8d %8d %7.2f", d_str,r[0],r[1],r[2],r[3])
     end
 
   end
