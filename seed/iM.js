@@ -17,6 +17,55 @@ exports.deltaEncode = function(values){
     });
 }
 
+function appendShorter(encoded,rl,run,verbose){
+    if (JSON.stringify([rl]).length<JSON.stringify(run).length){
+        if (verbose) {
+            console.log("  --RLE %j > %j",run,[rl]);
+        }
+        encoded.push(rl);
+    } else {
+        if (verbose) {
+            console.log("  ++ORG %j < %j",run,[rl]);
+        }
+        encoded.concat(run);
+    }
+}
+
+exports.rlEncode = function(values,verbose){
+    // [0,0,x,y,...] -> [[2,0],x,y,..]
+    var head=-99999999; // impossible
+    var encoded = [];
+    var rl=[0,head];
+    var run=[];
+    this.rangeStepDo(0,values.length,1,function(i){
+        var v = values[i];
+        if (v==head) {
+            rl[0]+=1;
+            run.push(head);
+        } else {
+            //flush
+            if (rl[0]>0){
+                appendShorter(encoded,rl,run,verbose);
+            }
+            if (verbose) {
+                console.log("Encoded %j",encoded);
+            }
+            head=v;
+            rl=[1,head];
+            run=[v];
+        }
+    });
+    //flush last time
+    if (rl[0]>0){
+        appendShorter(encoded,rl,run,verbose);
+    }
+    if (verbose) {
+        console.log("Encoded %j",encoded);
+        console.log("----------------");
+    }
+    return encoded;
+}
+
 // convert [{w,s},{w,s}] (to {w:s,w:s}) to {s,[w,w,w,w]}
 // should we inject startStr,grain ?
 exports.rawToCanonical = function(json,startStr,grain,verbose){

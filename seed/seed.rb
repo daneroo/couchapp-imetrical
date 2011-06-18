@@ -95,10 +95,10 @@ end
     x.report("write w/attach") do
       canonical["values"]=[]
       canonical["_id"] = "daniel.#{d_str}"
-      rsp = db.save_doc(canonical)
-      doc  = db.get( rsp[ 'id' ] )
+      #rsp = db.save_doc(canonical)
+      #doc  = db.get( rsp[ 'id' ] )
       #-- add an attachment
-      doc.put_attachment( 'V10RL.json', json_canonical, { "content_type"=>"application/json"} )
+      #doc.put_attachment( 'V10RL.json', JSON.generate(canonical), { "content_type"=>"application/json"} )
     end
 
     puts sprintf("%22s %10s %8s %8s %7s",'date','method','samples','size','ratio')

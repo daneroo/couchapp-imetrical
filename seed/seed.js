@@ -59,6 +59,13 @@ var handleData = function(json){
     ratio = Math.round(100*json.length/canonicalJSON.length)/100;
     console.log(tf.sprintf("%22s %10s %8d %8d %7.2f",startStr,'D-P3',values.length,canonicalJSON.length,ratio));
 
+    // Runlength
+    values = iM.rlEncode(values);
+    canonical.values = values;
+    canonicalJSON = JSON.stringify(canonical);
+    ratio = Math.round(100*json.length/canonicalJSON.length)/100;
+    console.log(tf.sprintf("%22s %10s %8d %8d %7.2f",startStr,'RL',values.length,canonicalJSON.length,ratio));
+
 }
 
 //util.log(JSON.stringify(options))
