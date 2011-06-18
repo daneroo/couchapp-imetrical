@@ -8,7 +8,7 @@ var tf=require('sprintf-0.7-beta1');
 //console.log("Hello couch");
 //sys.puts("iMetrical")
 //util.log("iMetrical-couch seed");
-if (true){
+if (false){
   //iM.rlEncode([1,2,3,4,5,6,7],true);
   //var v=[1,2,3,3,3,3,null,null,7,5,6,8,6,5,4,null,4,5,null,null,null,null,null];
   var v=[90,90,90,90,90,90,90,90,90,90,90,90,90,90,90,90,90,90,null,90,90,90,91,90,90,90,90,90,90];
@@ -50,28 +50,20 @@ var handleData = function(json){
     
     // V10
     iM.rangeStepDo(0,values.length,1,function(i){
-        values[i] = Math.round(values[i]/10);        
+        values[i] = (values[i]===null)?null:Math.round(values[i]/10);        
     });
     canonicalJSON = JSON.stringify(canonical);
     ratio = Math.round(100*json.length/canonicalJSON.length)/100;
     console.log(tf.sprintf("%22s %10s %8d %8d %7.2f",startStr,'V10',values.length,canonicalJSON.length,ratio));
-		//console.log("v10: %j",canonical.values);
-    
-		for (var i=686;i<687;i++){
-			console.log("v10:%d %j",i,canonical.values.slice(i*100,(i+1)*100));
-		}
     // Delta
     iM.deltaEncode(values);
     canonicalJSON = JSON.stringify(canonical);
     ratio = Math.round(100*json.length/canonicalJSON.length)/100;
     console.log(tf.sprintf("%22s %10s %8d %8d %7.2f",startStr,'Delta',values.length,canonicalJSON.length,ratio));
-		for (var i=686;i<687;i++){
-			console.log("dlt:%d %j",i,canonical.values.slice(i*100,(i+1)*100));
-		}
 
     // P3
     iM.rangeStepDo(0,values.length,1,function(i){
-        values[i] = values[i]+=3;        
+        values[i] = (values[i]===null)?null:values[i]+=3;        
     });
     canonicalJSON = JSON.stringify(canonical);
     ratio = Math.round(100*json.length/canonicalJSON.length)/100;

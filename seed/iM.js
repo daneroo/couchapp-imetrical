@@ -8,18 +8,11 @@ exports.rangeStepDo = function(lo,hi,step,cb){
 
 exports.deltaEncode = function(values){
     // [x,y,z,a,b,c] -> [x,y-x,z-y]
-    var prev=null;
+    var previous=null;
     this.rangeStepDo(0,values.length,1,function(i){
         var w = values[i];
-        var d = (w===null) ? null : ( (prev===null) ? w : (w-prev) );
-				if (w===null){
-					d=null;
-				} else if (prev===null) {
-					d=w;
-				} else {
-					d=w-prev;
-				}
-        prev=w;
+        var d = (w===null) ? null : ( (previous===null) ? w : (w-previous) );
+        previous=w;
         values[i]=d;
     });
 }
@@ -90,7 +83,7 @@ exports.rawToCanonical = function(json,startStr,grain,verbose){
     data.forEach(function(v, idx, array) { 
         if (verbose) console.log('--'+util.inspect(v, false, null));
         d = Date.parse(v['stamp'])/1000 - startOfDay;
-        w = v['watt'];
+        w = parseInt(v['watt'],10);
         stampToWatt[d]=w;
         if (verbose) console.log('++'+util.inspect([d,w], false, null));
     });
@@ -98,7 +91,9 @@ exports.rawToCanonical = function(json,startStr,grain,verbose){
     var values = [];
     this.rangeStepDo(0,86400,grain,function(i){
         //console.log("-=-= "+i+" : "+stampToWatt[i]);
-        values.push(stampToWatt[i]);
+        var w = stampToWatt[i];
+        w = (w===undefined)?null:w;
+        values.push(w);
         delete stampToWatt[i];        
     });
     if (verbose && Object.keys(stampToWatt).length>0){

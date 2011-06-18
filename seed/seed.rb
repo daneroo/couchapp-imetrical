@@ -77,17 +77,11 @@ end
       # some value are not  val%10==0
       canonical["values"]=canonical["values"].collect {|w| w!=nil ? (w.to_i/10.0).round : w }
     end
-    (686..686).each do |i|
-      puts "v10:#{i} #{JSON.generate(canonical["values"].slice(i*100,100))}"
-    end
     report(x,'V10',canonical,json_raw,results)
   
 
     x.report("delta") do
       canonical["values"]=IM.delta_encode(canonical["values"])
-    end
-    (686..686).each do |i|
-      puts "dlt:#{i} #{JSON.generate(canonical["values"].slice(i*100,100))}"
     end
     report(x,'Delta',canonical,json_raw,results)
     x.report("P3") do
