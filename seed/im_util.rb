@@ -105,7 +105,11 @@ module IM
       w = stamp_to_watt.delete(t_str)
       if w==nil && verbose
         puts "!found #{t_str}: #{w}"        
-      end  
+      end
+      if w!=nil
+        w = w.to_i
+      end
+          
       canonical["values"][idx]=w
     end
       

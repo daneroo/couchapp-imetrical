@@ -30,6 +30,12 @@ var options = {
     path: '/iMetrical/getJSONForDay.php?offset='+1+'&table='+table
 };
 
+var report = function(startStr,name,canonical,jsonRaw) {
+  var canonicalJSON = JSON.stringify(canonical);
+  var ratio = Math.round(100*jsonRaw.length/canonicalJSON.length)/100;
+  console.log(tf.sprintf("%22s %10s %8d %8d %7.2f",startStr,name,canonical.values.length,canonicalJSON.length,ratio));
+}
+
 var handleData = function(json){
     //console.log('json:'+json);
     data = JSON.parse(json);
@@ -42,41 +48,27 @@ var handleData = function(json){
         "grain" : grain,
         "values" : values
     };
-    var canonicalJSON,ratio;
-    canonicalJSON = JSON.stringify(canonical);
-    ratio = Math.round(100*json.length/canonicalJSON.length)/100;
-    console.log(tf.sprintf("%22s %10s %8d %8d %7.2f",startStr,'canonical',values.length,canonicalJSON.length,ratio));
-		//console.log("raw: %j",canonical.values);
-    
+    report(startStr,'canonical',canonical,json);
+
     // V10
     iM.rangeStepDo(0,values.length,1,function(i){
         values[i] = (values[i]===null)?null:Math.round(values[i]/10);        
     });
-    canonicalJSON = JSON.stringify(canonical);
-    ratio = Math.round(100*json.length/canonicalJSON.length)/100;
-    console.log(tf.sprintf("%22s %10s %8d %8d %7.2f",startStr,'V10',values.length,canonicalJSON.length,ratio));
+    report(startStr,'V10',canonical,json);
     // Delta
     iM.deltaEncode(values);
-    canonicalJSON = JSON.stringify(canonical);
-    ratio = Math.round(100*json.length/canonicalJSON.length)/100;
-    console.log(tf.sprintf("%22s %10s %8d %8d %7.2f",startStr,'Delta',values.length,canonicalJSON.length,ratio));
+    report(startStr,'Delta',canonical,json);
 
     // P3
     iM.rangeStepDo(0,values.length,1,function(i){
         values[i] = (values[i]===null)?null:values[i]+=3;        
     });
-    canonicalJSON = JSON.stringify(canonical);
-    ratio = Math.round(100*json.length/canonicalJSON.length)/100;
-    console.log(tf.sprintf("%22s %10s %8d %8d %7.2f",startStr,'D-P3',values.length,canonicalJSON.length,ratio));
-		//console.log("dp3: %j",canonical.values);
+    report(startStr,'D-P3',canonical,json);
 
     // Runlength
     values = iM.rlEncode(values);
     canonical.values = values;
-    canonicalJSON = JSON.stringify(canonical);
-    ratio = Math.round(100*json.length/canonicalJSON.length)/100;
-    console.log(tf.sprintf("%22s %10s %8d %8d %7.2f",startStr,'RL',values.length,canonicalJSON.length,ratio));
-		//console.log("rl: %j",canonical.values);
+    report(startStr,'RL',canonical,json);
 }
 
 //util.log(JSON.stringify(options))
