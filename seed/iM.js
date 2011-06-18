@@ -8,10 +8,17 @@ exports.rangeStepDo = function(lo,hi,step,cb){
 
 exports.deltaEncode = function(values){
     // [x,y,z,a,b,c] -> [x,y-x,z-y]
-    var prev=null
+    var prev=null;
     this.rangeStepDo(0,values.length,1,function(i){
-        var w = values[i]
-        var d = (w==null) ? null : (prev!=null ? w-prev : w);
+        var w = values[i];
+        var d = (w===null) ? null : ( (prev===null) ? w : (w-prev) );
+				if (w===null){
+					d=null;
+				} else if (prev===null) {
+					d=w;
+				} else {
+					d=w-prev;
+				}
         prev=w;
         values[i]=d;
     });
@@ -26,8 +33,13 @@ function appendShorter(encoded,rl,run,verbose){
     } else {
         if (verbose) {
             console.log("  ++ORG %j < %j",run,[rl]);
+            console.log("  appending %j to %j",run,encoded);
         }
-        encoded.concat(run);
+        //encoded.concat(run);
+				for (var r=0;r<run.length;r++) encoded.push(run[r]);
+        if (verbose) {
+            console.log("  gives %j",encoded);
+        }
     }
 }
 

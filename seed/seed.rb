@@ -9,12 +9,14 @@ require 'uri'
 require 'net/http'
 
 if false
-  IM.rl_encode([1,2,3,4,5,6,7],true)
-  v=[1,2,3,3,3,3,7,5,6,8,6,5,4,nil,4,5,nil,nil,nil,nil,nil]
-  IM.rl_encode(v,true)
-  #delta=IM.delta_encode(v)
-  #puts v.inspect
-  #puts delta.inspect
+  #IM.rl_encode([1,2,3,4,5,6,7],true)
+  #v=[1,2,3,3,3,3,nil,nil,7,5,6,8,6,5,4,nil,4,5,nil,nil,nil,nil,nil]
+  v=[90,90,nil,90,90]
+  puts v.inspect
+  IM.rl_encode(v,false)
+  puts v.inspect
+  delta=IM.delta_encode(v)
+  puts delta.inspect
   Process.exit
 end
 
@@ -73,7 +75,10 @@ end
   
     x.report("V10") do
       # some value are not  val%10==0
-      canonical["values"]=canonical["values"].collect {|w| w!=nil ? w.to_i/10 : w }
+      canonical["values"]=canonical["values"].collect {|w| w!=nil ? (w.to_i/10.0).round : w }
+    end
+    (686..686).each do |i|
+      puts "v10:#{i} #{JSON.generate(canonical["values"].slice(i*100,100))}"
     end
     report(x,'V10',canonical,json_raw,results)
   
@@ -81,6 +86,10 @@ end
     x.report("delta") do
       canonical["values"]=IM.delta_encode(canonical["values"])
     end
+    (686..686).each do |i|
+      puts "dlt:#{i} #{JSON.generate(canonical["values"].slice(i*100,100))}"
+    end
+    report(x,'Delta',canonical,json_raw,results)
     x.report("P3") do
       # some value are not  val%10==0
       canonical["values"]=canonical["values"].collect {|w| w!=nil ? w.to_i+3 : w }
@@ -93,8 +102,8 @@ end
     report(x,'RL',canonical,json_raw,results)
 
     x.report("write w/attach") do
-      canonical["values"]=[]
-      canonical["_id"] = "daniel.#{d_str}"
+      #canonical["values"]=[]
+      #canonical["_id"] = "daniel.#{d_str}"
       #rsp = db.save_doc(canonical)
       #doc  = db.get( rsp[ 'id' ] )
       #-- add an attachment
@@ -105,7 +114,7 @@ end
     results.each do |r|
       puts sprintf("%22s %10s %8d %8d %7.2f", d_str,r[0],r[1],r[2],r[3])
     end
-
+    #puts "rl: #{JSON.generate(canonical["values"])}"
   end
   
 end

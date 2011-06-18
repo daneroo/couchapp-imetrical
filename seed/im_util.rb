@@ -72,9 +72,9 @@ module IM
     # [x,y,z,a,b,c] -> [x,y-x,z-y]
     prev=nil
     encoded=values.collect do |w|
-       r = w==nil ? nil : ( prev!=nil ? w-prev : w )
+       d = (w==nil) ? nil : ( prev!=nil ? w-prev : w )
        prev=w
-       r
+       d
     end
     return encoded
   end
