@@ -52,7 +52,8 @@ var H = function(values){
         }
     }
     var bitsPerSample = summplogp/Math.LN2;
-    //console.log("values has %d symbols with H(x)=%s bits/sample",nkeys,bitsPerSample);
+    //console.log("values has %d symbols with H(x)=%s bits/sample costs:%d bytes",nkeys,bitsPerSample,JSON.stringify(histo).length);
+    //console.log(" histo: %j",histo);
     return bitsPerSample;
 }
 var report = function(startStr,name,canonical,jsonRaw) {
