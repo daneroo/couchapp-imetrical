@@ -3,8 +3,123 @@ var http=require('http');
 var util=require('util');
 require.paths.unshift('.')
 var iM=require('iM');
+var entropy=require('entropy');
 var tf=require('sprintf-0.7-beta1');
 
+if (true){
+    var length=100;
+    var mod3 = function(b){
+        return b%3==0?1:0
+    }
+    var randUniform = function(b){
+        return (Math.random()>.5)?1:0;
+    }
+    var randMoreOnes = function(b){
+        return (Math.random()>.125)?1:0;
+    }
+    var mostlyOnes = function(length){
+        var v=[];
+        for (var b=0;b<length;b++){
+            v.push( randMoreOnes(b));
+        }
+        return v;
+    }
+    
+        
+    if (false){
+
+        var enc = new entropy.ArithmeticCoder();
+        for (var b=0;b<length;b++){
+            var bit = randMoreOnes(b);//randUniform(b);//mod3(b);
+            enc.setBit(bit);
+            console.log("enc: %d -> %s",bit,enc.toBitStream(false));
+        }
+        enc.setBitFlush();
+
+        var encodedByteArray = enc.mFile.slice(0); 
+        console.log("-------------------------------");
+        console.log("encoded:  %s",enc.toBitStream());
+        console.log("-------------------------------");
+        var dec = new entropy.ArithmeticCoder(encodedByteArray);
+        dec.setFile(encodedByteArray);
+        for (var b=0;b<length;b++){
+            var bit = dec.getBit();
+            // === b%3==0?1:0
+            console.log("dec: %d <- %s",bit,dec.toBitStream(true));
+        }
+    }
+    
+    if (true){
+        // Binary Model - non adaptive
+        var enc = new entropy.ArithmeticCoder();
+        var genData = mostlyOnes(length);
+        
+        var mTotal = 1001; // 0,1,2==EOF
+        var mCumCount = [125,875,1];
+        for (var b=0;b<length;b++){
+            var symbol = genData[b];
+            var low_count=0;
+            for (var j = 0; j < symbol; j++) {
+                low_count += mCumCount[j];
+            }
+            //console.log("  mCumCount:%j mTotal:%j",mCumCount, mTotal);
+            console.log("encoded symbol:%d [%d,%d]/%d",symbol,low_count, low_count + mCumCount[symbol], mTotal);
+            enc.encode(low_count, low_count + mCumCount[symbol], mTotal);
+            // update model => adaptive encoding model
+            //mCumCount[symbol]++;
+            //mTotal++;        
+        }
+        // write escape symbol ($ in docs) for termination
+        enc.encode(mTotal - 1, mTotal, mTotal);
+        enc.encodeFinish();
+        var encodedByteArray = enc.mFile.slice(0); 
+        console.log("encoded: %j",encodedByteArray);
+
+        //process.exit(0);
+
+        var dec = new entropy.ArithmeticCoder(encodedByteArray);
+        dec.setFile(encodedByteArray);
+        console.log("decode start:  %s",dec.toBitStream(true));        
+        console.log(" -dec.mBuffer:  %s",dec.mBuffer.toString(2));        
+        dec.decodeStart();
+        console.log(" +dec.mBuffer:  %s",dec.mBuffer.toString(2));  
+        var recoveredData=[];
+        while (true) {
+            var value = dec.decodeTarget(mTotal);
+            //console.log("decoded value: %d",value);
+
+
+            var low_count=0;
+            var symbol=0;
+            // determine symbol
+            for(symbol=0; low_count + mCumCount[symbol] <= value; symbol++ ) {
+                low_count += mCumCount[symbol];
+            }
+
+            // Write symbol, if it was not terminator
+            if (symbol < 2) {
+                //mTarget.WriteByte((byte)symbol);
+                util.debug(tf.sprintf("decoded symbol: %d  (value=%d)",symbol,value));
+                recoveredData.push(symbol);
+            } else {
+                util.debug(tf.sprintf("decoded end-of-stream symbol (value=%d)",value));
+                break;
+            }
+
+            //process.exit(0);
+            // adapt decoder
+            dec.decode( low_count, low_count + mCumCount[symbol] );
+            // update model
+            //mCumCount[symbol]++;
+            //mTotal++;
+
+        }
+        util.debug("decoded end-of-stream symbol");
+    }
+    console.log("orig   : %j",genData);
+    console.log("decoded: %j",recoveredData);
+    process.exit(0);
+}
 //console.log("Hello couch");
 //sys.puts("iMetrical")
 //util.log("iMetrical-couch seed");
