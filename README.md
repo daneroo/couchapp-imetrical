@@ -25,6 +25,12 @@ Credentials are in `~/.couchapp.conf`.
     -- whole history 1050 Documents 
     V10P3+RL+D-atach    21,151,842/112,471,842:  20.6M ratio: 253.6/48.6
 
+###  Entropy Coding external resources
+
+    http://www.bodden.de/legacy/arithmetic-coding/
+    http://www.arturocampos.com/ac_range.html
+    http://www.data-compression.info/Algorithms/AC/
+    http://xlinux.nist.gov/dads//HTML/arithmeticCoding.html
 
 ## Mysql sources
 
