@@ -46,7 +46,7 @@ ArithmeticCoder.prototype = {
     encode: function(low_count, high_count, total) {
         // total < 2^29
         // partition number space into single steps
-        this.mStep = (this.mHigh - this.mLow + 1) / total; // interval open at the top => +1
+        this.mStep = Math.floor((this.mHigh - this.mLow + 1) / total); // interval open at the top => +1
         // update upper bound
         this.mHigh = this.mLow + this.mStep * high_count - 1; // interval open at the top => -1
         // update lower bound

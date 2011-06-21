@@ -63,7 +63,7 @@ if (true){
                 low_count += mCumCount[j];
             }
             //console.log("  mCumCount:%j mTotal:%j",mCumCount, mTotal);
-            console.log("encoded symbol:%d [%d,%d]/%d",symbol,low_count, low_count + mCumCount[symbol], mTotal);
+            //console.log("encoded symbol:%d [%d,%d]/%d",symbol,low_count, low_count + mCumCount[symbol], mTotal);
             enc.encode(low_count, low_count + mCumCount[symbol], mTotal);
             // update model => adaptive encoding model
             //mCumCount[symbol]++;
@@ -73,16 +73,17 @@ if (true){
         enc.encode(mTotal - 1, mTotal, mTotal);
         enc.encodeFinish();
         var encodedByteArray = enc.mFile.slice(0); 
-        console.log("encoded: %j",encodedByteArray);
+        
+        //console.log("encoded: %j",encodedByteArray);
 
         //process.exit(0);
 
         var dec = new entropy.ArithmeticCoder(encodedByteArray);
         dec.setFile(encodedByteArray);
-        console.log("decode start:  %s",dec.toBitStream(true));        
-        console.log(" -dec.mBuffer:  %s",dec.mBuffer.toString(2));        
+        //console.log("decode start:  %s",dec.toBitStream(true));        
+        //console.log(" -dec.mBuffer:  %s",dec.mBuffer.toString(2));        
         dec.decodeStart();
-        console.log(" +dec.mBuffer:  %s",dec.mBuffer.toString(2));  
+        //console.log(" +dec.mBuffer:  %s",dec.mBuffer.toString(2));  
         var recoveredData=[];
         while (true) {
             var value = dec.decodeTarget(mTotal);
@@ -99,10 +100,10 @@ if (true){
             // Write symbol, if it was not terminator
             if (symbol < 2) {
                 //mTarget.WriteByte((byte)symbol);
-                util.debug(tf.sprintf("decoded symbol: %d  (value=%d)",symbol,value));
+                //util.debug(tf.sprintf("decoded symbol: %d  (value=%d)",symbol,value));
                 recoveredData.push(symbol);
             } else {
-                util.debug(tf.sprintf("decoded end-of-stream symbol (value=%d)",value));
+                //util.debug(tf.sprintf("decoded end-of-stream symbol (value=%d)",value));
                 break;
             }
 
@@ -114,8 +115,9 @@ if (true){
             //mTotal++;
 
         }
-        util.debug("decoded end-of-stream symbol");
+        //util.debug("decoded end-of-stream symbol");
     }
+    console.log("------------------------------");
     console.log("orig   : %j",genData);
     console.log("decoded: %j",recoveredData);
     process.exit(0);
