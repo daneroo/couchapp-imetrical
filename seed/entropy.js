@@ -4,6 +4,7 @@
   Eric Bodden's C++ implemtation
 */
 var tf=require('sprintf-0.7-beta1');
+var iM=require('iM');
 
 // We export only the constructor after it is declared
 
@@ -190,6 +191,33 @@ ArithmeticCoder.prototype = {
         }
         return bits.join(' ');
     }
-    
 };
+
+exports.H = function(values){
+    histo={};
+    iM.rangeStepDo(0,values.length,1,function(i){
+        v = values[i];
+        if (histo[v]===undefined) histo[v]=0;
+        (histo[v]++);
+    });
+    var nkeys=0; 
+    var summplogp=0;
+    for (k in histo) { 
+        nkeys++;
+        if (histo[k]>0){
+            var p = histo[k]*1.0/values.length;
+            var mplogp = -p*Math.log(p);
+            summplogp += mplogp
+            //console.log(tf.sprintf("k:%10s p:%10.6f p log p: %10.6f sum:%10.6f",JSON.stringify(k),p,mplogp,sumplogp));
+        } else {
+            // should never happen
+            console.log("excluding k:%s histo[k]:%s",k,histo[k]);
+        }
+    }
+    var bitsPerSample = summplogp/Math.LN2;
+    //console.log("values has %d symbols with H(x)=%s bits/sample costs:%d bytes",nkeys,bitsPerSample,JSON.stringify(histo).length);
+    //console.log(" histo: %j",histo);
+    return bitsPerSample;
+}
+
 

@@ -11,7 +11,7 @@ Credentials are in `~/.couchapp.conf`.
     couchapp push . imetrical
 
 ## Entropy Coding - Compact representation
-    Raw/hour         1741938786 : 1.6G ratio:  1.0
+    Raw              1741938786 : 1.6G ratio:  1.0
     Canonical         263159906 : 251M ratio:  6.6
     Runlength         105803874 : 100M ratio: 16.4
     V10               100216930 :  95M ratio: 17.3
