@@ -1,10 +1,50 @@
 var sys=require('sys');
 var util=require('util');
-require.paths.unshift('.')
-var iM=require('iM');
+var _  = require('underscore');
+_.mixin(require('underscore.string'));
+// move this to entropy
+_.mixin({
+  rangeDo :   function(start, stop, step, iterator, context) {
+      // rangeDo([start],stop,[step],iterator,[context])
+      arguments = _.toArray(arguments);
+      if (!_.detect(arguments,_.isFunction)) return;
+      if (_.isFunction(_.last(arguments))){
+          iterator=arguments.pop();
+          context=undefined;
+      } else {
+          context=arguments.pop();
+          iterator=arguments.pop();
+      }
+      if (arguments.length <= 1) {
+          stop = start || 0;
+          start = 0;
+      }
+      step = arguments[2] || 1;
+      for (var i = start; i < stop; i+=step) {
+          iterator.call(context, i);
+      }
+      return context;
+  }
+});
+
+require.paths.unshift('.');
 var entropy=require('entropy');
 var tf=require('sprintf-0.7-beta1');
 
+if (false){
+    var cb=function(i){ console.log('iteration: %d',i);};
+    var cbc=function(i){ this.msg+="+"; console.log('iteration: %d : %s',i,this.msg);};
+    _.rangeDo(0,5,2);
+    _.rangeDo(0,5,2,cb);
+    _.rangeDo(5,2,cb);
+    _.rangeDo(5,cb);
+    _.rangeDo(0,5,2,cbc,{msg:"ctx"});
+    _.rangeDo(5,2,cbc,{msg:"ctx"});
+    _.rangeDo(5,cbc,{msg:"ctx"});
+    r = _.rangeDo(5,cbc,{msg:"ctx"});
+    console.log('out: %j',r);
+    process.exit(0);
+}
 var mod3 = function(b){
     return b%3==0?1:0
 }
@@ -16,13 +56,13 @@ var randMoreOnes = function(b){
 }    
 
 if (false){
-    var length=80;
+    var length=33;
     var enc = new entropy.ArithmeticCoder();
-    for (var b=0;b<length;b++){
+    _.rangeDo(length,function(b){
         var bit = randUniform(b);//randUniform(b);//mod3(b);
         enc.setBit(bit);
         console.log("enc: %d -> %s",bit,enc.toBitStream(false));
-    }
+    });
     enc.setBitFlush();
 
     var encodedByteArray = enc.mFile.slice(0); 
@@ -31,11 +71,11 @@ if (false){
     console.log("-------------------------------");
     var dec = new entropy.ArithmeticCoder(encodedByteArray);
     dec.setFile(encodedByteArray);
-    for (var b=0;b<length;b++){
+    _.rangeDo(length,function(i){
         var bit = dec.getBit();
         // === b%3==0?1:0
         console.log("dec: %d <- %s",bit,dec.toBitStream(true));
-    }
+    });
 }
 
 if (true){
@@ -43,39 +83,32 @@ if (true){
     // Binary Model - non adaptive
     var methods={'mod3':mod3,'randUniform':randUniform,'randMoreOnes':randMoreOnes};
     var histos=[[66667,33333,1],[50000,50000,1],[100,99900,1]];
-    for (var m in methods){
-        for (var h in histos){
-            var mTotal = 0; // 0,1,2==EOF
-            var mCumCount = histos[h].slice(0);
-            for (var s=0;s<mCumCount.length;s++){
-                mTotal+=mCumCount[s];
-            }
-            console.log("------------------------------");
-            //console.log(" Code Source: %s using Model: %j, total:%d",m,mCumCount,mTotal);
+    _(methods).each(function(method,m){
+        _(histos).each(function(histo,h){
+            var mTotal = _.reduce(histo, function(sum, v){ return sum + v; }, 0);
+            var mCumCount = histo.slice(0);
+            //console.log(" Code Source: %s using Model: %j, total:%d",m,histo,mTotal);
 
-            // Generate Data
             var genData = [];
-            for (var b=0;b<length;b++){
-                genData.push(methods[m](b));
-            }
+            _.rangeDo(length,function(b){
+                genData.push(method(b));
+            });
 
             var obeservedEntropyBps = entropy.H(genData);
+
             //Encoding
             var enc = new entropy.ArithmeticCoder();
 
-            for (var b=0;b<length;b++){
-                var symbol = genData[b];
+            _.each(genData,function(symbol){
                 var low_count=0;
                 for (var j = 0; j < symbol; j++) {
                     low_count += mCumCount[j];
                 }
-                //console.log("  mCumCount:%j mTotal:%j",mCumCount, mTotal);
-                //console.log("encoded symbol:%d [%d,%d]/%d",symbol,low_count, low_count + mCumCount[symbol], mTotal);
                 enc.encode(low_count, low_count + mCumCount[symbol], mTotal);
                 // update model => adaptive encoding model
                 //mCumCount[symbol]++;
                 //mTotal++;        
-            }
+            });
             // write escape symbol ($ in docs) for termination
             enc.encode(mTotal - 1, mTotal, mTotal);
             enc.encodeFinish();
@@ -84,16 +117,14 @@ if (true){
             // Decoding
             var dec = new entropy.ArithmeticCoder(encodedByteArray);
             dec.setFile(encodedByteArray.slice(0));
-            //console.log("decode start:  %s",dec.toBitStream(true));        
-            //console.log(" -dec.mBuffer:  %s",dec.mBuffer.toString(2));        
             dec.decodeStart();
             //console.log(" +dec.mBuffer:  %s",dec.mBuffer.toString(2));  
             var recoveredData=[];
             while (true) {
+                //if (recoveredData.length%10000==0) console.log("       ---------------------");
+                
+                // get value
                 var value = dec.decodeTarget(mTotal);
-                //console.log("decoded value: %d",value);
-
-
                 var low_count=0;
                 var symbol=0;
                 // determine symbol
@@ -110,8 +141,6 @@ if (true){
                     //util.debug(tf.sprintf("decoded end-of-stream symbol (value=%d)",value));
                     break;
                 }
-
-                //process.exit(0);
                 // adapt decoder
                 dec.decode( low_count, low_count + mCumCount[symbol] );
                 // update model
@@ -132,8 +161,8 @@ if (true){
                 JSON.stringify(mCumCount),
                 mTotal
             ));
-        }
-    }
+        });
+    });
     console.log("------------------------------");
 
 }

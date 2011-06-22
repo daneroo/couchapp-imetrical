@@ -32,6 +32,12 @@ Credentials are in `~/.couchapp.conf`.
     http://www.data-compression.info/Algorithms/AC/
     http://xlinux.nist.gov/dads//HTML/arithmeticCoding.html
 
+### Dependancies
+The seeding script has now been rewritten in `node.js` `javascript`.
+It now requires a few dependancies:
+
+    npm install underscore underscore.string
+
 ## Mysql sources
 
     mysql> select min(stamp),max(stamp) from watt;
