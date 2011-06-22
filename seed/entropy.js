@@ -237,6 +237,51 @@ exports.Hhisto = function(histo){
     return bitsPerSample;
 }
 
+var myIsFunction = function(obj) {
+    return !!(obj && obj.constructor && obj.call && obj.apply);
+};
+
+// there are three dependancies on _underscore reduce,isFunction and transitively my rangeDo  
+exports.myEncoder=function(functionOrArray,histo,length){
+    var enc = new this.ArithmeticCoder();
+    //var mTotal = _.reduce(histo, function(sum, v){ return sum + v; }, 0);
+    var mTotal = 0;
+    for (var h=0;h<histo.length;h++){
+        mTotal += histo[h];
+    }
+    var mCumCount = histo.slice(0);
+    
+    var getSymbol = function(b){
+        //var symbol = (_.isFunction(functionOrArray)) ? functionOrArray(b) : functionOrArray[b];
+        var symbol = (myIsFunction(functionOrArray)) ? functionOrArray(b) : functionOrArray[b];
+        return symbol;
+    }
+    var encodeOneSymbol = function(b) {
+        var symbol = getSymbol(b);
+        var low_count=0;
+        for (var j = 0; j < symbol; j++) {
+            low_count += mCumCount[j];
+        }
+        enc.encode(low_count, low_count + mCumCount[symbol], mTotal);
+        // update model => adaptive encoding model
+        //mCumCount[symbol]++;
+        //mTotal++;        
+    }
+    
+    // this is the only dependancy on _underscore
+    //_.rangeDo(length,encodeOneSymbol);
+    for (var b=0;b<length;b++){
+        encodeOneSymbol(b);
+    }
+    
+    // write end-of-stream-symbol (mTotal-1)
+    enc.encode(mTotal - 1, mTotal, mTotal);
+    enc.encodeFinish();
+    var encodedByteArray = enc.mFile.slice(0); 
+    
+    return encodedByteArray;
+}
+
 // require export
 exports.ArithmeticCoder = ArithmeticCoder;
 

@@ -17,29 +17,6 @@ var randMoreOnes = function(b){
     return (Math.random()>.001)?1:0;
 }    
 
-if (false){
-    var length=80;
-    var enc = new entropy.ArithmeticCoder();
-    for (var b=0;b<length;b++){
-        var bit = randUniform(b);//randUniform(b);//mod3(b);
-        enc.setBit(bit);
-        console.log("enc: %d -> %s",bit,enc.toBitStream(false));
-    }
-    enc.setBitFlush();
-
-    var encodedByteArray = enc.mFile.slice(0); 
-    console.log("-------------------------------");
-    console.log("encoded:  %s",enc.toBitStream());
-    console.log("-------------------------------");
-    var dec = new entropy.ArithmeticCoder(encodedByteArray);
-    dec.setFile(encodedByteArray);
-    for (var b=0;b<length;b++){
-        var bit = dec.getBit();
-        // === b%3==0?1:0
-        console.log("dec: %d <- %s",bit,dec.toBitStream(true));
-    }
-}
-
 if (true){
     var length=100000;
     // Binary Model - non adaptive

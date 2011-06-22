@@ -16,30 +16,6 @@ var randMoreOnes = function(b){
     return (Math.random()>.001)?1:0;
 }    
 
-var myEncoder=function(functionOrArray,histo,length){
-    var enc = new entropy.ArithmeticCoder();
-    var mTotal = _.reduce(histo, function(sum, v){ return sum + v; }, 0);
-    var mCumCount = histo.slice(0);
-    
-    _.rangeDo(length,function(b){
-        var symbol = (_.isFunction(functionOrArray)) ? functionOrArray(b) : functionOrArray[b];
-        var low_count=0;
-        for (var j = 0; j < symbol; j++) {
-            low_count += mCumCount[j];
-        }
-        enc.encode(low_count, low_count + mCumCount[symbol], mTotal);
-        // update model => adaptive encoding model
-        //mCumCount[symbol]++;
-        //mTotal++;        
-    });
-    // write escape symbol ($ in docs) for termination
-    enc.encode(mTotal - 1, mTotal, mTotal);
-    enc.encodeFinish();
-    var encodedByteArray = enc.mFile.slice(0); 
-    
-    return encodedByteArray
-}
-
 var myDecoder = function(encodedByteArray,histo,length){
     var dec = new entropy.ArithmeticCoder(encodedByteArray);
     dec.setFile(encodedByteArray.slice(0));
@@ -86,7 +62,7 @@ if (true){
         _(histos).each(function(histo,h){
 
             //Encoding
-            var encodedByteArray = myEncoder(method,histo,length);
+            var encodedByteArray = entropy.myEncoder(method,histo,length);
             // Decoding
             var recoveredData = myDecoder(encodedByteArray,histo,length);
             //util.debug("decoded end-of-stream symbol");
