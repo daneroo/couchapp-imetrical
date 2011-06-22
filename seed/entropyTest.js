@@ -1,9 +1,11 @@
 var sys=require('sys');
 var util=require('util');
+var _  = require('underscore');
+_.mixin(require('underscore.string'));
+
 require.paths.unshift('.')
 var iM=require('iM');
 var entropy=require('entropy');
-var tf=require('sprintf-0.7-beta1');
 
 var mod3 = function(b){
     return b%3==0?1:0
@@ -44,27 +46,28 @@ if (true){
     var methods={'mod3':mod3,'randUniform':randUniform,'randMoreOnes':randMoreOnes};
     var histos=[[66667,33333,1],[50000,50000,1],[100,99900,1]];
     for (var m in methods){
+        // Generate Data
+        var genData = [];
+        for (var b=0;b<length;b++){
+            genData.push(methods[m](b));
+        }
+        var obeservedEntropyBps = entropy.H(genData);
+        genData=[];
+        
         for (var h in histos){
             var mTotal = 0; // 0,1,2==EOF
             var mCumCount = histos[h].slice(0);
             for (var s=0;s<mCumCount.length;s++){
                 mTotal+=mCumCount[s];
             }
-            console.log("------------------------------");
+            //console.log("------------------------------");
             //console.log(" Code Source: %s using Model: %j, total:%d",m,mCumCount,mTotal);
 
-            // Generate Data
-            var genData = [];
-            for (var b=0;b<length;b++){
-                genData.push(methods[m](b));
-            }
-
-            var obeservedEntropyBps = entropy.H(genData);
             //Encoding
             var enc = new entropy.ArithmeticCoder();
 
             for (var b=0;b<length;b++){
-                var symbol = genData[b];
+                var symbol = methods[m](b);//genData[b];
                 var low_count=0;
                 for (var j = 0; j < symbol; j++) {
                     low_count += mCumCount[j];
@@ -84,36 +87,20 @@ if (true){
             // Decoding
             var dec = new entropy.ArithmeticCoder(encodedByteArray);
             dec.setFile(encodedByteArray.slice(0));
-            //console.log("decode start:  %s",dec.toBitStream(true));        
-            //console.log(" -dec.mBuffer:  %s",dec.mBuffer.toString(2));        
             dec.decodeStart();
             //console.log(" +dec.mBuffer:  %s",dec.mBuffer.toString(2));  
             var recoveredData=[];
             while (true) {
-                var value = dec.decodeTarget(mTotal);
-                //console.log("decoded value: %d",value);
-
-
-                var low_count=0;
-                var symbol=0;
-                // determine symbol
-                for(symbol=0; low_count + mCumCount[symbol] <= value; symbol++ ) {
-                    low_count += mCumCount[symbol];
-                }
+                //if (recoveredData.length%10000==0) console.log("       ---------------------",recoveredData.length);
+                var symbol = dec.decodeSymbol(mTotal,mCumCount);
 
                 // Write symbol, if it was not terminator
                 if (symbol < 2) {
                     //mTarget.WriteByte((byte)symbol);
-                    //util.debug(tf.sprintf("decoded symbol: %d  (value=%d)",symbol,value));
                     recoveredData.push(symbol);
                 } else {
-                    //util.debug(tf.sprintf("decoded end-of-stream symbol (value=%d)",value));
                     break;
                 }
-
-                //process.exit(0);
-                // adapt decoder
-                dec.decode( low_count, low_count + mCumCount[symbol] );
                 // update model
                 //mCumCount[symbol]++;
                 //mTotal++;
@@ -124,7 +111,7 @@ if (true){
             //console.log("decoded: %j ...",recoveredData.slice(0,30));
             //console.log("encoded: %j ...",encodedByteArray.slice(0,20));    
             console.log(
-                tf.sprintf("compression: %5.2f:1 bits/s: %.4f >= %.4f = H   Source: %15s, Model: %s total:%d",
+                _.sprintf("compression: %5.2f:1 bits/s: %.4f >= %.4f = H   Source: %15s, Model: %s total:%d",
                 length/8/encodedByteArray.length,
                 encodedByteArray.length*8.0/length,
                 obeservedEntropyBps,
@@ -134,7 +121,7 @@ if (true){
             ));
         }
     }
-    console.log("------------------------------");
+    //console.log("------------------------------");
 
 }
 

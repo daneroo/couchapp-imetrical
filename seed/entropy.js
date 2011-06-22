@@ -6,8 +6,7 @@
 var tf=require('sprintf-0.7-beta1');
 var iM=require('iM');
 
-// We export only the constructor after it is declared
-
+// We export only the constructor after it is declared (at end of file)
 // Constructor
 var ArithmeticCoder = function() {
   this.mFile = [];    
@@ -21,9 +20,6 @@ var ArithmeticCoder = function() {
 
   this.mBuffer = 0;
 }
-
-// require export
-exports.ArithmeticCoder = ArithmeticCoder;
 
 // properties and methods
 ArithmeticCoder.prototype = {
@@ -99,6 +95,22 @@ ArithmeticCoder.prototype = {
         for (var i = 0; i < 31; i++) { // just use the 31 least significant bits
             this.mBuffer = (this.mBuffer << 1) | this.getBit();
         }
+    },
+    // convenience for decodeTarget+decode
+    decodeSymbol: function(total,mCumCount){
+        // get value
+        var value = this.decodeTarget(total);
+        var low_count=0;
+        var symbol=0;
+        // determine symbol
+        var zz=0;
+        for(symbol=0; (zz = low_count + mCumCount[symbol]) <= value; symbol++ ) {
+            //low_count += mCumCount[symbol];
+            low_count = zz;
+        }
+        // adapt decoder
+        this.decode( low_count, low_count + mCumCount[symbol] );
+        return symbol;
     },
     // converts raw stored data to original value
     decodeTarget: function(total) {// total < 2^29
@@ -200,12 +212,17 @@ exports.H = function(values){
         if (histo[v]===undefined) histo[v]=0;
         (histo[v]++);
     });
-    var nkeys=0; 
+    return this.Hhisto(histo);
+}
+exports.Hhisto = function(histo){
+    var total=0;
+    for (var h in histo) { 
+        total+=histo[h];
+    }
     var summplogp=0;
-    for (k in histo) { 
-        nkeys++;
+    for (var k in histo) { 
         if (histo[k]>0){
-            var p = histo[k]*1.0/values.length;
+            var p = histo[k]*1.0/total;
             var mplogp = -p*Math.log(p);
             summplogp += mplogp
             //console.log(tf.sprintf("k:%10s p:%10.6f p log p: %10.6f sum:%10.6f",JSON.stringify(k),p,mplogp,sumplogp));
@@ -220,4 +237,6 @@ exports.H = function(values){
     return bitsPerSample;
 }
 
+// require export
+exports.ArithmeticCoder = ArithmeticCoder;
 
