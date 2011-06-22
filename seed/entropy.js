@@ -282,6 +282,41 @@ exports.myEncoder=function(functionOrArray,histo,length){
     return encodedByteArray;
 }
 
+// there is one dependancies on _underscore: _.reduce
+exports.myDecoder = function(encodedByteArray,histo,length){
+    var dec = new this.ArithmeticCoder(encodedByteArray);
+    dec.setFile(encodedByteArray.slice(0));
+    dec.decodeStart();
+    //console.log(" +dec.mBuffer:  %s",dec.mBuffer.toString(2));  
+    var recoveredData=[];
+
+    //var mTotal = _.reduce(histo, function(sum, v){ return sum + v; }, 0);
+    var mTotal = 0;
+    for (var h=0;h<histo.length;h++){
+        mTotal += histo[h];
+    }
+    var mCumCount = histo.slice(0);
+    
+    while (true) {
+        //if (recoveredData.length%10000==0) console.log("       ---------------------",recoveredData.length);
+        // get next symbol:
+        var symbol = dec.decodeSymbol(mTotal,mCumCount);
+        // Write symbol, if it was not terminator
+        if (symbol < 2) {
+            //mTarget.WriteByte((byte)symbol);
+            recoveredData.push(symbol);
+        } else {
+            break;
+        }
+        // update model
+        //mCumCount[symbol]++;
+        //mTotal++;
+
+    }
+    return recoveredData;
+    
+}
+
 // require export
 exports.ArithmeticCoder = ArithmeticCoder;
 

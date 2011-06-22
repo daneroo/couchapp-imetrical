@@ -16,36 +16,6 @@ var randMoreOnes = function(b){
     return (Math.random()>.001)?1:0;
 }    
 
-var myDecoder = function(encodedByteArray,histo,length){
-    var dec = new entropy.ArithmeticCoder(encodedByteArray);
-    dec.setFile(encodedByteArray.slice(0));
-    dec.decodeStart();
-    //console.log(" +dec.mBuffer:  %s",dec.mBuffer.toString(2));  
-    var recoveredData=[];
-
-    var mTotal = _.reduce(histo, function(sum, v){ return sum + v; }, 0);
-    var mCumCount = histo.slice(0);
-    
-    while (true) {
-        //if (recoveredData.length%10000==0) console.log("       ---------------------",recoveredData.length);
-        // get next symbol:
-        var symbol = dec.decodeSymbol(mTotal,mCumCount);
-        // Write symbol, if it was not terminator
-        if (symbol < 2) {
-            //mTarget.WriteByte((byte)symbol);
-            recoveredData.push(symbol);
-        } else {
-            break;
-        }
-        // update model
-        //mCumCount[symbol]++;
-        //mTotal++;
-
-    }
-    return recoveredData;
-    
-}
-
 if (true){
     var length=100000;
     // Binary Model - non adaptive
@@ -64,7 +34,8 @@ if (true){
             //Encoding
             var encodedByteArray = entropy.myEncoder(method,histo,length);
             // Decoding
-            var recoveredData = myDecoder(encodedByteArray,histo,length);
+            var recoveredData = entropy.myDecoder(encodedByteArray,histo,length);
+
             //util.debug("decoded end-of-stream symbol");
             //console.log("orig   : %j ...",genData.slice(0,30));
             //console.log("decoded: %j ...",recoveredData.slice(0,30));

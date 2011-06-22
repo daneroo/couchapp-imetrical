@@ -32,57 +32,17 @@ if (true){
         genData=[];
         
         for (var h in histos){
+            //Encoding
+            var encodedByteArray = entropy.myEncoder(methods[m],histos[h],length);
+            
             var mTotal = 0; // 0,1,2==EOF
             var mCumCount = histos[h].slice(0);
             for (var s=0;s<mCumCount.length;s++){
                 mTotal+=mCumCount[s];
             }
-            //console.log("------------------------------");
-            //console.log(" Code Source: %s using Model: %j, total:%d",m,mCumCount,mTotal);
-
-            //Encoding
-            var enc = new entropy.ArithmeticCoder();
-
-            for (var b=0;b<length;b++){
-                var symbol = methods[m](b);//genData[b];
-                var low_count=0;
-                for (var j = 0; j < symbol; j++) {
-                    low_count += mCumCount[j];
-                }
-                //console.log("  mCumCount:%j mTotal:%j",mCumCount, mTotal);
-                //console.log("encoded symbol:%d [%d,%d]/%d",symbol,low_count, low_count + mCumCount[symbol], mTotal);
-                enc.encode(low_count, low_count + mCumCount[symbol], mTotal);
-                // update model => adaptive encoding model
-                //mCumCount[symbol]++;
-                //mTotal++;        
-            }
-            // write escape symbol ($ in docs) for termination
-            enc.encode(mTotal - 1, mTotal, mTotal);
-            enc.encodeFinish();
-            var encodedByteArray = enc.mFile.slice(0); 
-
             // Decoding
-            var dec = new entropy.ArithmeticCoder(encodedByteArray);
-            dec.setFile(encodedByteArray.slice(0));
-            dec.decodeStart();
-            //console.log(" +dec.mBuffer:  %s",dec.mBuffer.toString(2));  
-            var recoveredData=[];
-            while (true) {
-                //if (recoveredData.length%10000==0) console.log("       ---------------------",recoveredData.length);
-                var symbol = dec.decodeSymbol(mTotal,mCumCount);
+            var recoveredData = entropy.myDecoder(encodedByteArray,histos[h],length);
 
-                // Write symbol, if it was not terminator
-                if (symbol < 2) {
-                    //mTarget.WriteByte((byte)symbol);
-                    recoveredData.push(symbol);
-                } else {
-                    break;
-                }
-                // update model
-                //mCumCount[symbol]++;
-                //mTotal++;
-
-            }
             //util.debug("decoded end-of-stream symbol");
             //console.log("orig   : %j ...",genData.slice(0,30));
             //console.log("decoded: %j ...",recoveredData.slice(0,30));
