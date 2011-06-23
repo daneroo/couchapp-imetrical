@@ -268,7 +268,7 @@ exports.myEncoder=function(functionOrArray,histo,length){
         //mTotal++;        
     }
     
-    // this is the only dependancy on _underscore
+    // this is a dependancy on _underscore
     //_.rangeDo(length,encodeOneSymbol);
     for (var b=0;b<length;b++){
         encodeOneSymbol(b);
@@ -302,7 +302,7 @@ exports.myDecoder = function(encodedByteArray,histo,length){
         // get next symbol:
         var symbol = dec.decodeSymbol(mTotal,mCumCount);
         // Write symbol, if it was not terminator
-        if (symbol < 2) {
+        if (symbol < mCumCount.length-1) {
             //mTarget.WriteByte((byte)symbol);
             recoveredData.push(symbol);
         } else {
