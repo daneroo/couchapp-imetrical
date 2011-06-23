@@ -32,6 +32,20 @@ var options = {
     path: '/iMetrical/getJSONForDay.php?offset='+1+'&table='+table
 };
 
+var ACCodingCost = function(values){
+    // require entropy
+    // histo of values, 
+    // map values to symbols (order by histo count desc)
+    // make new histo[symbols]
+    histoMap={};
+    // seed with values, order by values desc, inject into histo
+    valuesToSymbol={};
+    histo = [];
+    symbolValues=[];// 0..|histoMap|
+    var encodedByteArray = entropy.myEncoder(symbolValues,histo,length);
+    var recoveredData = entropy.myDecoder(encodedByteArray,histo,length);
+    return encodedByteArray.length;
+}
 var H = function(values){
     histo={};
     iM.rangeStepDo(0,values.length,1,function(i){
