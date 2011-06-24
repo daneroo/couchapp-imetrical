@@ -105,7 +105,7 @@ for (var l in lengths){
                     obeservedEntropyBps,
                     model.name,
                     JSON.stringify(histo.slice(0,5))+'...',
-                    JSON.stringify(encodedByteArray.slice(0,20))
+                    JSON.stringify(encodedByteArray.slice(0,10))
                 ));
                 var verbose=false;
                 if (verbose){
