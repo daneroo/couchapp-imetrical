@@ -150,6 +150,13 @@ var saveDay = function(canonical){
 var handleData = function(json,grain){
     //console.log('json:'+json);
     data = JSON.parse(json);
+    
+    // need to get the stamp from elsewhere, to get null output
+    if (data.length<1) {
+        console.log("no data -- skipping");
+        return;
+    }
+    
     startStr = data[0]['stamp'];
     console.log(_.sprintf("%22s %10s %8s %8s %7s %7s %7s %7s %7s",'date','method','samples','size','ratio','Bps','H(x)','<bound','<ac+h'));
     console.log(_.sprintf("%22s %10s %8d %8d %7.2f %7.2f",startStr,'raw',data.length,json.length,1.0,json.length/86400/grain));
@@ -193,7 +200,7 @@ function doADay(offset,maxoffset) {
         //path: '/iMetrical/getJSONForDay.php?day='+d_d+'&table='+table
         path: '/iMetrical/getJSONForDay.php?offset='+offset+'&table='+table
     };
-    console.log('------ fetch ofset %d ------',offset);
+    console.log('------ fetch offset %d ------',offset);
     http.get(options, function(res) {
         var responseBody = '';
         //console.log("Got response: " + res.statusCode);
@@ -212,5 +219,6 @@ function doADay(offset,maxoffset) {
 
 }
 
-doADay(1,100);
+doADay(1,366);
+//doADay(196,366);
 //doADay(1,20);//doADay(1,10);//doADay(10,20);
