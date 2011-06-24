@@ -1,10 +1,12 @@
 var sys=require('sys');
 var http=require('http');
 var util=require('util');
+var _  = require('underscore');
+_.mixin(require('underscore.string'));
+var cradle = require('cradle');
 require.paths.unshift('.')
 var iM=require('iM');
 var entropy=require('entropy');
-var tf=require('sprintf-0.7-beta1');
 
 
 //console.log("Hello couch");
@@ -21,30 +23,67 @@ if (false){
 	console.log("delta %j",v);
   process.exit(0);
 }
-//var baseURI = "http://192.168.5.2/iMetrical/getJSONForDay.php";
-var table="watt"; // watt,watt_tensec,watt_minute,watt_hour
-var grain=1
 
-var options = {
-    host: '192.168.5.2',
-    port: 80,
-    //path: '/iMetrical/getJSONForDay.php?day='+d_d+'&table='+table
-    path: '/iMetrical/getJSONForDay.php?offset='+1+'&table='+table
-};
 
 var ACCodingCost = function(values){
-    // require entropy
-    // histo of values, 
-    // map values to symbols (order by histo count desc)
-    // make new histo[symbols]
-    histoMap={};
-    // seed with values, order by values desc, inject into histo
-    valuesToSymbol={};
-    histo = [];
-    symbolValues=[];// 0..|histoMap|
-    var encodedByteArray = entropy.myEncoder(symbolValues,histo,length);
-    var recoveredData = entropy.myDecoder(encodedByteArray,histo,length);
-    return encodedByteArray.length;
+    var verbose=false;
+
+    // histo : count the values into a Map
+    var histoMap={};
+    _.each(values,function(v){
+        if (histoMap[v]===undefined) histoMap[v]=0;
+        (histoMap[v]++);        
+    });
+    //console.log('histoMapCost',JSON.stringify(histoMap).length);
+    //console.log('%j',histoMap);
+    
+    // make the histo into a sortable array
+    // Sorting the symbol array is about make the cumulative ditribution count effective
+    //  it is all about how the encoder will look this up in the model.
+    //  for now we put the probable symbols at the begining.
+    var histoToSort = _.map(histoMap,function(count,value){
+        // because histoMap's keys are converted to strings, get the int back (if it is an int)
+        var asInt = parseInt(value);
+        if (!_.isNaN(asInt)) { value=asInt;}
+        return {count:count,value:value};
+    });
+    // now sort it ( by count desc)
+    histoToSort = _.sortBy(histoToSort,function(e){return -e.count}); 
+    //histoToSort = _.sortBy(histoToSort,function(e){return e.value}); 
+
+    var symbolForValue={};
+    var valueForSymbol={};
+    var histo=[];
+    _.each(histoToSort,function(e,symbol){
+        //e.symbol = symbol;
+        symbolForValue[e.value]=symbol;
+        valueForSymbol[symbol]=e.value;
+        histo.push(e.count);
+    });
+
+    histo.push(1); // for EOS
+    //the EOS Symbols is never actually returned by the decoder.
+    //valueForSymbol[histo.length-1]='EOS';
+    
+    var symbols=[];
+    _.each(values,function(v){symbols.push(symbolForValue[v]);});
+    var encodedByteArray = entropy.myEncoder(symbols,histo,values.length);
+    var recoveredSymbols = entropy.myDecoder(encodedByteArray,histo);
+    var recoveredValues = [];
+    _.each(recoveredSymbols,function(s){recoveredValues.push(valueForSymbol[s]);});
+    if (verbose){
+        console.log('sorted histo: %j...%j ',histoToSort.slice(0,-6),histoToSort.slice(-3));
+        //console.log('v->s',symbolForValue);
+        //console.log('v<-s',valueForSymbol);
+        //console.log('histo',JSON.stringify(histo.slice(0,30)));
+        console.log("- values(%d): %j...%j",values.length,values.slice(0,30),values.slice(-4));
+        console.log("- symbol(%d): %j...%j",symbols.length,symbols.slice(0,30),symbols.slice(-4));
+        console.log('bytes:',encodedByteArray.length,encodedByteArray.slice(0,10),encodedByteArray.slice(-4));
+        console.log("+ symbol(%d): %j...%j",recoveredSymbols.length,recoveredSymbols.slice(0,30),recoveredSymbols.slice(-4));
+        console.log("+ values(%d): %j...%j",recoveredValues.length,recoveredValues.slice(0,30),recoveredValues.slice(-4));
+    }
+    
+    return encodedByteArray.length+JSON.stringify(histoMap).length;
 }
 var H = function(values){
     histo={};
@@ -61,7 +100,7 @@ var H = function(values){
             var p = histo[k]*1.0/values.length;
             var mplogp = -p*Math.log(p);
             summplogp += mplogp
-            //console.log(tf.sprintf("k:%10s p:%10.6f p log p: %10.6f sum:%10.6f",JSON.stringify(k),p,mplogp,sumplogp));
+            //console.log(_.sprintf("k:%10s p:%10.6f p log p: %10.6f sum:%10.6f",JSON.stringify(k),p,mplogp,sumplogp));
         } else {
             // should never happen
             console.log("excluding k:%s histo[k]:%s",k,histo[k]);
@@ -78,16 +117,42 @@ var report = function(startStr,name,canonical,jsonRaw) {
   var bps = canonicalJSON.length/86400/canonical.grain;
   var hB = H(canonical.values)/8.0;
   var lboundB = hB*canonical.values.length;
-  console.log(tf.sprintf("%22s %10s %8d %8d %7.2f %7.2f %7.2f %7.0f",startStr,name,canonical.values.length,canonicalJSON.length,ratio,bps,hB,lboundB));
+  var acCost=0;
+  if ('Delta'==name){
+      acCost = ACCodingCost(canonical.values);
+  }
+  console.log(_.sprintf("%22s %10s %8d %8d %7.2f %7.2f %7.2f %7.0f %7d",startStr,name,canonical.values.length,canonicalJSON.length,ratio,bps,hB,lboundB,acCost));
 }
 
-
-var handleData = function(json){
+var saveDay = function(canonical){
+    var db = new(cradle.Connection)().database('imetrical');
+    //canonical["_id"] = _.sprintf("daniel.%s",canonical.stamp);
+    //console.log("ca: %j",canonical);
+    var attach_json = JSON.stringify(canonical);
+    var values = canonical.values;
+    canonical.values=[];
+    console.log('about to save: %j',attach_json.length);
+    db.save( _.sprintf("daniel.%s",canonical.stamp), canonical,function(err,rsp){
+        console.log('save %j',[err,rsp]);
+        db.saveAttachment( 
+            rsp.id, 
+            rsp.rev, 
+            'N10RL.json',
+            'application/json', 
+            attach_json,
+            function( err, rsp ){
+                console.log('saveAttachment %j',[err,rsp]);
+                if (err) return;
+            }
+        );
+    });
+}
+var handleData = function(json,grain){
     //console.log('json:'+json);
     data = JSON.parse(json);
     startStr = data[0]['stamp'];
-    console.log(tf.sprintf("%22s %10s %8s %8s %7s %7s %7s %7s",'date','method','samples','size','ratio','Bps','H(x)','<bound'));
-    console.log(tf.sprintf("%22s %10s %8d %8d %7.2f %7.2f",startStr,'raw',data.length,json.length,1.0,json.length/86400/grain));
+    console.log(_.sprintf("%22s %10s %8s %8s %7s %7s %7s %7s %7s",'date','method','samples','size','ratio','Bps','H(x)','<bound','<ac+h'));
+    console.log(_.sprintf("%22s %10s %8d %8d %7.2f %7.2f",startStr,'raw',data.length,json.length,1.0,json.length/86400/grain));
     var values = iM.rawToCanonical(json,startStr,grain,false);
     var canonical = {
         "stamp" : startStr,
@@ -115,18 +180,37 @@ var handleData = function(json){
     values = iM.rlEncode(values);
     canonical.values = values;
     report(startStr,'RL',canonical,json);
+    saveDay(canonical);
 }
 
-//util.log(JSON.stringify(options))
-http.get(options, function(res) {
-    var responseBody = '';
-    //console.log("Got response: " + res.statusCode);
-    res.addListener('data', function(chunk) {
-        responseBody += chunk;
+function doADay(offset,maxoffset) {
+
+    var table="watt"; // watt,watt_tensec,watt_minute,watt_hour
+    var grain=1;
+    var options = {
+        host: '192.168.5.2',
+        port: 80,
+        //path: '/iMetrical/getJSONForDay.php?day='+d_d+'&table='+table
+        path: '/iMetrical/getJSONForDay.php?offset='+offset+'&table='+table
+    };
+    console.log('------ fetch ofset %d ------',offset);
+    http.get(options, function(res) {
+        var responseBody = '';
+        //console.log("Got response: " + res.statusCode);
+        res.addListener('data', function(chunk) {
+            responseBody += chunk;
+        });
+        res.addListener('end', function() {
+            handleData(responseBody,grain);
+            if (offset<maxoffset-1){
+                setTimeout(function(){doADay(offset+1,maxoffset);},1);
+            }
+        });
+    }).on('error', function(e) {
+        console.log("Got error: " + e.message);
     });
-    res.addListener('end', function() {
-        handleData(responseBody);
-    });
-}).on('error', function(e) {
-    console.log("Got error: " + e.message);
-});
+
+}
+
+doADay(1,100);
+//doADay(1,20);//doADay(1,10);//doADay(10,20);

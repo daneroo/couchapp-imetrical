@@ -24,7 +24,10 @@ Credentials are in `~/.couchapp.conf`.
     V10P3+RL+D-atach    6869090/35845778:  6.6M ratio: 253.6/48.6
     -- whole history 1050 Documents 
     V10P3+RL+D-atach    21,151,842/112,471,842:  20.6M ratio: 253.6/48.6
-
+    -- with node.js
+    V10P3+RL+D-atach    xxx/yyy:  6.6M ratio: 253.6/48.6
+    V10AC+attach        xxx/yyy:  6.6M ratio: 253.6/48.6
+    
 ###  Entropy Coding external resources
 
     http://www.bodden.de/legacy/arithmetic-coding/
@@ -38,6 +41,10 @@ It now requires a few dependancies:
 
     npm install underscore underscore.string
 
+For couchdb I will first try [cradle](http://cloudhead.io/cradle) : [github](https://github.com/cloudhead/cradle)
+
+    npm install cradle
+    
 ## Mysql sources
 
     mysql> select min(stamp),max(stamp) from watt;
