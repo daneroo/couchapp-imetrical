@@ -92,7 +92,7 @@ for (var l in lengths){
                 var encodedByteArray = entropy.myEncoder(genData,histo,length);
 
                 // Decoding
-                var recoveredData = entropy.myDecoder(encodedByteArray,histo,length);
+                var recoveredData = entropy.myDecoder(encodedByteArray,histo);
                 var sha1r = sha1sum(JSON.stringify(recoveredData));
 
                 console.log(
