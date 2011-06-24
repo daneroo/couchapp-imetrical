@@ -3,7 +3,8 @@
   C# implementation by Sina Momken, adapted from
   Eric Bodden's C++ implemtation
 */
-var tf=require('sprintf-0.7-beta1');
+var _  = require('underscore');  //dependency for underscore.string
+_.mixin(require('underscore.string')); // for toBitStream
 var iM=require('iM');
 
 // We export only the constructor after it is declared (at end of file)
@@ -191,14 +192,14 @@ ArithmeticCoder.prototype = {
     toBitStream : function(isReading){
         var bits =[];
         for (var i=0;i<this.mFile.length;i++){
-            bits.push(tf.sprintf("%08b",this.mFile[i]));
+            bits.push(_.sprintf("%08b",this.mFile[i]));
         }
         if (this.mBitCount>0){
             var fmt = '%0'+this.mBitCount+'b';
             if (isReading){
-                bits.unshift(tf.sprintf(fmt,this.mBitBuffer>>(8-this.mBitCount)));
+                bits.unshift(_.sprintf(fmt,this.mBitBuffer>>(8-this.mBitCount)));
             } else {
-                bits.push(tf.sprintf(fmt,this.mBitBuffer));
+                bits.push(_.sprintf(fmt,this.mBitBuffer));
             }
         }
         return bits.join(' ');
@@ -225,7 +226,7 @@ exports.Hhisto = function(histo){
             var p = histo[k]*1.0/total;
             var mplogp = -p*Math.log(p);
             summplogp += mplogp
-            //console.log(tf.sprintf("k:%10s p:%10.6f p log p: %10.6f sum:%10.6f",JSON.stringify(k),p,mplogp,sumplogp));
+            //console.log(_.sprintf("k:%10s p:%10.6f p log p: %10.6f sum:%10.6f",JSON.stringify(k),p,mplogp,sumplogp));
         } else {
             // should never happen
             console.log("excluding k:%s histo[k]:%s",k,histo[k]);
@@ -275,6 +276,7 @@ exports.myEncoder=function(functionOrArray,histo,length){
     }
     
     // write end-of-stream-symbol (mTotal-1)
+    // This is not quite right... assumes too much
     enc.encode(mTotal - 1, mTotal, mTotal);
     enc.encodeFinish();
     var encodedByteArray = enc.mFile.slice(0); 
@@ -283,7 +285,7 @@ exports.myEncoder=function(functionOrArray,histo,length){
 }
 
 // there is one dependancies on _underscore: _.reduce
-exports.myDecoder = function(encodedByteArray,histo,length){
+exports.myDecoder = function(encodedByteArray,histo){
     var dec = new this.ArithmeticCoder(encodedByteArray);
     dec.setFile(encodedByteArray.slice(0));
     dec.decodeStart();
