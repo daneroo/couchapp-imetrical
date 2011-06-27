@@ -13,5 +13,11 @@ couchapp_load([
   "vendor/couchapp/jquery.couch.app.js",
   "vendor/couchapp/jquery.couch.app.util.js",
   "vendor/couchapp/jquery.mustache.js",
-  "vendor/couchapp/jquery.evently.js"
+  "vendor/couchapp/jquery.evently.js",
+  "http://www.google.com/jsapi",
+  "http://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.1.6/underscore-min.js",
+  "http://cdnjs.cloudflare.com/ajax/libs/underscore.string/1.1.4/underscore.string.min.js",
+  //"http://dygraphs.com/dygraph-combined.js", //http://dygraphs.com/
+  "http://dygraphs.com/dygraph-dev.js",
+  "js/imetrical.js"
 ]);

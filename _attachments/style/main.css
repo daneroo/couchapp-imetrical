@@ -9,6 +9,10 @@ h1 {
   margin-top:0;
 }
 
+#profile, #sidebar {
+  display:none;
+}
+
 #account {
   float:right;
 }

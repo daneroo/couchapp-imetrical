@@ -10,20 +10,36 @@
     <h1>Generated CouchApp</h1>
 
     <div id="profile"></div>
-    <div id="items"></div>
-
+    
     <div id="sidebar">
       <p>Edit welcome message.</p>
       <p>Ideas: You could easily turn this into a photo sharing app, or a grocery list, or a chat room.</p>
     </div>
+    
+    <div id="chart">
+      <button id="prev" type="button">Previous</button>
+      <button id="next" type="button">Next</button>
+      <div id="visualization" style="width: 800px; height: 400px;"></div>
+      <div id="dygraph" style="width: 800px; height: 400px;"></div>
+    </div>
+    <div id="items"></div>
+    
   </body>
   <script src="vendor/couchapp/loader.js"></script>
   <script type="text/javascript" charset="utf-8">
+    google.load('visualization', '1', {packages: ['corechart']});
+    //google.load("visualization", "1", {packages:["columnchart","areachart"]});
+    //vizLoaded = false;
+    //google.setOnLoadCallback(function(){vizLoaded=true});
+    
     $.couch.app(function(app) {
       $("#account").evently("account", app);
       $("#profile").evently("profile", app);
       $.evently.connect("#account","#profile", ["loggedIn","loggedOut"]);
       $("#items").evently("items", app);
+      $('#prev').click(function(){getChart('prev',app);})
+      $('#next').click(function(){getChart('next',app);})
+      getChart('prev',app);
     });
   </script>
 </html>

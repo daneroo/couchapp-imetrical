@@ -25,8 +25,10 @@ if (false){
 }
 
 
-var ACCodingCost = function(values){
+var ACCodingCost = function(canonical){    
     var verbose=false;
+    var values = canonical.values;
+    
 
     // histo : count the values into a Map
     var histoMap={};
@@ -62,12 +64,13 @@ var ACCodingCost = function(values){
     });
 
     histo.push(1); // for EOS
-    //the EOS Symbols is never actually returned by the decoder.
+    //the EOS Symbol is never actually returned by the decoder.
     //valueForSymbol[histo.length-1]='EOS';
     
     var symbols=[];
     _.each(values,function(v){symbols.push(symbolForValue[v]);});
     var encodedByteArray = entropy.myEncoder(symbols,histo,values.length);
+    
     var recoveredSymbols = entropy.myDecoder(encodedByteArray,histo);
     var recoveredValues = [];
     _.each(recoveredSymbols,function(s){recoveredValues.push(valueForSymbol[s]);});
@@ -82,7 +85,18 @@ var ACCodingCost = function(values){
         console.log("+ symbol(%d): %j...%j",recoveredSymbols.length,recoveredSymbols.slice(0,30),recoveredSymbols.slice(-4));
         console.log("+ values(%d): %j...%j",recoveredValues.length,recoveredValues.slice(0,30),recoveredValues.slice(-4));
     }
-    
+
+    function byteToString(bytes){
+        var s='';
+        _.each(bytes,function(b){s+=String.fromCharCode(b);});
+        return s;
+    }    
+    var b64 = new Buffer(byteToString(encodedByteArray)).toString('base64')
+    canonical.ac={
+        histo: histoMap,
+        b64: b64,
+    };
+    canonical.values=[];
     return encodedByteArray.length+JSON.stringify(histoMap).length;
 }
 var H = function(values){
@@ -115,11 +129,14 @@ var report = function(startStr,name,canonical,jsonRaw) {
   var canonicalJSON = JSON.stringify(canonical);
   var ratio = Math.round(100*jsonRaw.length/canonicalJSON.length)/100;
   var bps = canonicalJSON.length/86400/canonical.grain;
-  var hB = H(canonical.values)/8.0;
-  var lboundB = hB*canonical.values.length;
+  var hB=0;lboundB=0;
+  if (canonical.values.length>0){
+      hB = H(canonical.values)/8.0;
+      lboundB = hB*canonical.values.length;
+  }
   var acCost=0;
-  if ('Delta'==name){
-      acCost = ACCodingCost(canonical.values);
+  if (false && 'Delta'==name){
+      acCost = ACCodingCost(canonical);
   }
   console.log(_.sprintf("%22s %10s %8d %8d %7.2f %7.2f %7.2f %7.0f %7d",startStr,name,canonical.values.length,canonicalJSON.length,ratio,bps,hB,lboundB,acCost));
 }
@@ -131,13 +148,14 @@ var saveDay = function(canonical){
     var attach_json = JSON.stringify(canonical);
     var values = canonical.values;
     canonical.values=[];
+    canonical.ac={};
     console.log('about to save: %j',attach_json.length);
     db.save( _.sprintf("daniel.%s",canonical.stamp), canonical,function(err,rsp){
         console.log('save %j',[err,rsp]);
         db.saveAttachment( 
             rsp.id, 
             rsp.rev, 
-            'N10RL.json',
+            'AC.json',
             'application/json', 
             attach_json,
             function( err, rsp ){
@@ -170,16 +188,23 @@ var handleData = function(json,grain,startStr){
     iM.deltaEncode(values);
     report(startStr,'Delta',canonical,json);
 
-    // P3
-    iM.rangeStepDo(0,values.length,1,function(i){
-        values[i] = (values[i]===null)?null:values[i]+=3;        
-    });
-    report(startStr,'D-P3',canonical,json);
+    var doAC=true;
+    if (doAC){
+        ACCodingCost(canonical);
+        report(startStr,'AC+h',canonical,json);
+    } else {
+        // P3
+        iM.rangeStepDo(0,values.length,1,function(i){
+            values[i] = (values[i]===null)?null:values[i]+=3;        
+        });
+        report(startStr,'D-P3',canonical,json);
 
-    // Runlength
-    values = iM.rlEncode(values);
-    canonical.values = values;
-    report(startStr,'RL',canonical,json);
+        // Runlength
+        values = iM.rlEncode(values);
+        canonical.values = values;
+        report(startStr,'RL',canonical,json);
+    }
+    
     saveDay(canonical);
 }
 
@@ -215,6 +240,6 @@ function doADay(offset,maxoffset) {
 
 }
 
-doADay(1,1080);
+doADay(1,366);
 //doADay(196,366);
 //doADay(1,20);//doADay(1,10);//doADay(10,20);

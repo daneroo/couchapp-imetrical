@@ -27,7 +27,7 @@ Credentials are in `~/.couchapp.conf`.
     -- with node.js
     V10P3+RL+D-atach    6860898/35860234:  6.5M ratio: 253.9/48.6
     V10P3+RL+D-atach    21,323,874/113,583,503:  20.3M ratio: xx/yy : 1079 days;2778s
-    V10AC+attach        xxx/yyy:  x.xM ratio: xxx/yyy
+    V10AC+attach        8675426/12616212:  x.xM ratio: 200.8/138
 
 ###  Entropy Coding external resources
 
