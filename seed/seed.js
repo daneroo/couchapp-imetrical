@@ -155,7 +155,7 @@ var saveDay = function(canonical){
         db.saveAttachment( 
             rsp.id, 
             rsp.rev, 
-            'AC.json',
+            'Delta.json',
             'application/json', 
             attach_json,
             function( err, rsp ){
@@ -188,11 +188,12 @@ var handleData = function(json,grain,startStr){
     iM.deltaEncode(values);
     report(startStr,'Delta',canonical,json);
 
-    var doAC=true;
-    if (doAC){
+    var doAC=false;
+    var doRL=false;
+    if (doAC) {
         ACCodingCost(canonical);
         report(startStr,'AC+h',canonical,json);
-    } else {
+    } else if (doRL) {
         // P3
         iM.rangeStepDo(0,values.length,1,function(i){
             values[i] = (values[i]===null)?null:values[i]+=3;        
@@ -241,5 +242,5 @@ function doADay(offset,maxoffset) {
 }
 
 doADay(1,366);
-//doADay(196,366);
+doADay(366,1080);
 //doADay(1,20);//doADay(1,10);//doADay(10,20);

@@ -25,8 +25,11 @@ Credentials are in `~/.couchapp.conf`.
     -- whole history 1050 Documents 
     V10P3+RL+D-atach    21,151,842/112,471,842:  20.6M ratio: 253.6/48.6
     -- with node.js
+    D10-atach           6942818/81759132:  6.6M ratio: 250.9/21.3 : 365d;703s
+    D10-atach           21610594/227333843:  20.6M ratio: xx/yy : 1079d;2914s   
+    D10-attach was replicated with 24M of bandwidth! 
     V10P3+RL+D-atach    6860898/35860234:  6.5M ratio: 253.9/48.6
-    V10P3+RL+D-atach    21,323,874/113,583,503:  20.3M ratio: xx/yy : 1079 days;2778s
+    V10P3+RL+D-atach    21,323,874/113,583,503:  20.3M ratio: xx/yy : 1079d;2778s
     V10AC+attach        8675426/12616212:  x.xM ratio: 200.8/138
 
 ###  Entropy Coding external resources
@@ -36,6 +39,19 @@ Credentials are in `~/.couchapp.conf`.
     http://www.data-compression.info/Algorithms/AC/
     http://xlinux.nist.gov/dads//HTML/arithmeticCoding.html
 
+### measuring the impact of gzip/deflate
+See [Curl and compression](http://dev.nuclearrooster.com/2009/11/08/checking-gzipdeflate-server-responses-with-curl/).
+Make use of curls' `--silent/-s`,`--output/-o`, `-H`, and `--http1.0/-0`
+
+    URL='http://imetrical.couchone.com/imetrical/daniel.2011-05-29T00%3A00%3A00Z/Delta.json'
+    URL='http://127.0.0.1:5984/imetrical/daniel.2011-05-29T00%3A00%3A00Z/Delta.json'
+    curl -s -o /dev/null --write-out "size=%{size_download}\n" $URL
+    # size=185513
+    curl -s -o /dev/null -H "Accept-Encoding: gzip,deflate" --write-out "size=%{size_download}\n" $URL
+    # size=15687
+    curl -s -o /dev/null -0 -H "Accept-Encoding: gzip,deflate" --write-out "size=%{size_download}\n" $URL
+    # size=15687
+    
 ### Dependancies
 The seeding script has now been rewritten in `node.js` `javascript`.
 It now requires a few dependancies:
