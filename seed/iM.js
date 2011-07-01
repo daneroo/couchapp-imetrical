@@ -21,7 +21,7 @@ exports.deltaDecode = function(values){
     var previous=null;
     this.rangeStepDo(0,values.length,1,function(i){
         var d = values[i];
-        var w = (w===null) ? null : ( (previous===null) ? d : (d+previous) );
+        var w = (d===null) ? null : ( (previous===null) ? d : (d+previous) );
         previous=w;
         values[i]=w;
     });

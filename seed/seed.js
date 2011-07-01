@@ -8,7 +8,19 @@ require.paths.unshift('.')
 var iM=require('iM');
 var entropy=require('entropy');
 
-
+if (false) {
+  v = [ 100, 100, 123,123, null,234,234,56];
+  console.log('o: %j',v);
+  iM.deltaEncode(v);
+  console.log('+d: %j',v);
+  v = iM.rlEncode(v);
+  console.log('+r: %j',v);
+  v = iM.rlDecode(v);
+  console.log('-r: %j',v);
+  iM.deltaDecode(v);
+  console.log('-d: %j',v);
+  process.exit(0);
+}
 var ACCodingCost = function(canonical){    
     var verbose=false;
     var values = canonical.values;
@@ -172,10 +184,10 @@ function RLtoCanonical(rl){
   var values = canonical.values;
   // un RL
   canonical.values = values = iM.rlDecode(values);
-  console.log('+rl  %j..%j',values.slice(0,1000),values.slice(-5));
+  console.log('+rl  %j..%j',values.slice(0,10),values.slice(-5));
   // un Delta
   iM.deltaDecode(values);
-  console.log('+dlt %j..%j',values.slice(0,1000),values.slice(-5));
+  console.log('+dlt %j..%j',values.slice(0,10),values.slice(-5));
   // un Q
   iM.rangeStepDo(0,values.length,1,function(i){
       values[i] = (values[i]===null)?null:(values[i]*canonical.Q);        
@@ -197,14 +209,14 @@ function doADay(offset,maxoffset) {
     var key =  _.sprintf("daniel.%s",stampStr);
     db.get(key+'/RL.json',function(err,rsp){
       if (err) {
-        console.log('error: %j',name,err);
+        console.log('error: %j',err);
       } else {
         //handleData(responseBody,grain,stampStr);
         var olen = rsp.values.length;
         var canonical = RLtoCanonical(rsp);
         console.log('fetched: %s: %d -> %d',rsp.stamp,olen,canonical.values.length);
         if (offset<maxoffset-1){
-            //setTimeout(function(){doADay(offset+1,maxoffset);},1);
+            setTimeout(function(){doADay(offset+1,maxoffset);},0);
         }
       }
     });
