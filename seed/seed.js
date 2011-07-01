@@ -121,9 +121,9 @@ var H = function(values){
     //console.log(" histo: %j",histo);
     return bitsPerSample;
 }
-var report = function(startStr,name,canonical,jsonRaw) {
+var report = function(startStr,name,canonical) {
   var canonicalJSON = JSON.stringify(canonical);
-  var ratio = Math.round(100*jsonRaw.length/canonicalJSON.length)/100;
+  var ratio = 0;//Math.round(100*jsonRaw.length/canonicalJSON.length)/100;
   var bps = canonicalJSON.length/86400/canonical.grain;
   var hB=0;lboundB=0;
   if (canonical.values.length>0){
@@ -137,63 +137,57 @@ var report = function(startStr,name,canonical,jsonRaw) {
   console.log(_.sprintf("%22s %10s %8d %8d %7.2f %7.2f %7.2f %7.0f %7d",startStr,name,canonical.values.length,canonicalJSON.length,ratio,bps,hB,lboundB,acCost));
 }
 
-var handleData = function(json,grain,startStr){
-    //console.log('json:'+json);
-    var data = JSON.parse(json);
-        
+var handleData = function(canonical){
+    canonical.sizes={raw:0};
+    var startStr = canonical.stamp;
+    values = canonical.values;
     console.log(_.sprintf("%22s %10s %8s %8s %7s %7s %7s %7s %7s",'date','method','samples','size','ratio','Bps','H(x)','<bound','<ac+h'));
-    console.log(_.sprintf("%22s %10s %8d %8d %7.2f %7.2f",startStr,'raw',data.length,json.length,1.0,json.length/86400/grain));
-    var values = iM.rawToCanonical(json,startStr,grain,false);
-    var canonical = {
-        "stamp" : startStr,
-        "grain" : grain,
-        "values" : values
-    };
-    report(startStr,'canonical',canonical,json);
+    console.log(_.sprintf("%22s %10s %8d %8d %7.2f %7.2f",canonical.stamp,'raw',canonical.values.length,canonical.sizes.raw,1.0,canonical.sizes.raw/86400/canonical.grain));
+    report(startStr,'canonical',canonical);
 
     // V10
     iM.rangeStepDo(0,values.length,1,function(i){
         values[i] = (values[i]===null)?null:Math.round(values[i]/10);        
     });
-    report(startStr,'V10',canonical,json);
+    report(startStr,'V10',canonical);
     // Delta
     iM.deltaEncode(values);
-    report(startStr,'Delta',canonical,json);
+    report(startStr,'Delta',canonical);
 
-    var doAC=false;
-    var doRL=false;
+    var doAC=true;
+    var doRL=true;
     if (doAC) {
         ACCodingCost(canonical);
-        report(startStr,'AC+h',canonical,json);
+        report(startStr,'AC+h',canonical);
     } else if (doRL) {
         // P3
         iM.rangeStepDo(0,values.length,1,function(i){
             values[i] = (values[i]===null)?null:values[i]+=3;        
         });
-        report(startStr,'D-P3',canonical,json);
+        report(startStr,'D-P3',canonical);
 
         // Runlength
         values = iM.rlEncode(values);
         canonical.values = values;
-        report(startStr,'RL',canonical,json);
+        report(startStr,'RL',canonical);
     }    
 }
 
-function RLtoCanonical(rl){
+function RLtoCanonical(rl,verbose){
   var canonical = rl;
   var values = canonical.values;
   // un RL
   canonical.values = values = iM.rlDecode(values);
-  console.log('+rl  %j..%j',values.slice(0,10),values.slice(-5));
+  if (verbose){console.log('+rl  %j..%j',values.slice(0,10),values.slice(-5));}
   // un Delta
   iM.deltaDecode(values);
-  console.log('+dlt %j..%j',values.slice(0,10),values.slice(-5));
+  if (verbose){console.log('+dlt %j..%j',values.slice(0,10),values.slice(-5));}
   // un Q
   iM.rangeStepDo(0,values.length,1,function(i){
       values[i] = (values[i]===null)?null:(values[i]*canonical.Q);        
   });
   canonical.Q=1;
-  console.log('+Q %j..%j',values.slice(0,10),values.slice(-5));
+  if (verbose){console.log('+Q %j..%j',values.slice(0,10),values.slice(-5));}
   
   return canonical;
 }
@@ -211,10 +205,10 @@ function doADay(offset,maxoffset) {
       if (err) {
         console.log('error: %j',err);
       } else {
-        //handleData(responseBody,grain,stampStr);
         var olen = rsp.values.length;
         var canonical = RLtoCanonical(rsp);
         console.log('fetched: %s: %d -> %d',rsp.stamp,olen,canonical.values.length);
+        handleData(canonical);
         if (offset<maxoffset-1){
             setTimeout(function(){doADay(offset+1,maxoffset);},0);
         }
