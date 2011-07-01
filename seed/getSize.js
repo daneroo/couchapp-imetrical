@@ -11,15 +11,10 @@
   curl -s -o /dev/null -0 -H "Accept-Encoding: gzip,deflate" --write-out "size=%{size_download}\n" $URL
   # size=15687
 */
-var sys=require('sys');
 var http=require('http');
-var util=require('util');
 var _  = require('underscore');
 _.mixin(require('underscore.string'));
-var cradle = require('cradle');
 require.paths.unshift('.')
-var iM=require('iM');
-var entropy=require('entropy');
 
 function getSize(key,attach,useCompressed,cb){
   var path = key;
