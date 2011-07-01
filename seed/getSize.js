@@ -30,13 +30,14 @@ function getSize(key,attach,useCompressed,cb){
       host: 'localhost',
       port: 5984,
       path: '/imetrical/'+path,
+      method:'HEAD',
       headers:{
       }
   };
   if (useCompressed){
     options.headers["Accept-Encoding"]= "gzip,deflate";    
   }
-  http.get(options, function(res) {
+  var req = http.request(options, function(res) {
       //console.log("http: content-length %j " ,res.headers["content-length"]);
       var size = res.headers["content-length"];
       if (cb) {
@@ -45,6 +46,7 @@ function getSize(key,attach,useCompressed,cb){
   }).on('error', function(e) {
       console.log("Got error: " + e.message);
   });
+  req.end();
 }
 function doADay(offset,maxoffset) {
     var day = new Date();
