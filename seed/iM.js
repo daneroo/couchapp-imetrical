@@ -16,6 +16,16 @@ exports.deltaEncode = function(values){
         values[i]=d;
     });
 }
+exports.deltaDecode = function(values){
+    // [x,y,z,a,b,c] -> [x,y+x,z+y]
+    var previous=null;
+    this.rangeStepDo(0,values.length,1,function(i){
+        var d = values[i];
+        var w = (w===null) ? null : ( (previous===null) ? d : (d+previous) );
+        previous=w;
+        values[i]=w;
+    });
+}
 
 function appendShorter(encoded,rl,run,verbose){
     if (JSON.stringify([rl]).length<JSON.stringify(run).length){
@@ -69,6 +79,31 @@ exports.rlEncode = function(values,verbose){
         console.log("----------------");
     }
     return encoded;
+}
+
+exports.rlDecode = function(values,verbose){
+    // [100,[2,0],x,y,..] -> [0,0,x,y,...] 
+    var decoded = [];
+    for (var r=0; r<values.length;r++){
+      var v = values[r];
+      if (Array.isArray(v)){
+        if (v[1]==null) console.log('run of nulls ? %j',v);
+        for (var i=0;i<v[0];i++){
+          decoded.push(v[1]);
+        }
+      } else if (v===null || 'number'==typeof(v)){
+        decoded.push(v);
+      } else {
+        if (verbose) {
+            console.log("Decoding %j(%s)",v,typeof(v));
+        }
+      }
+    }
+    if (verbose) {
+        console.log("Decoded %j",decoded.length);
+        console.log("----------------");
+    }
+    return decoded;
 }
 
 // convert [{w,s},{w,s}] (to {w:s,w:s}) to {s,[w,w,w,w]}

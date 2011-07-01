@@ -9,22 +9,6 @@ var iM=require('iM');
 var entropy=require('entropy');
 
 
-//console.log("Hello couch");
-//sys.puts("iMetrical")
-//util.log("iMetrical-couch seed");
-if (false){
-  //iM.rlEncode([1,2,3,4,5,6,7],true);
-  //var v=[1,2,3,3,3,3,null,null,7,5,6,8,6,5,4,null,4,5,null,null,null,null,null];
-  var v=[90,90,90,90,90,90,90,90,90,90,90,90,90,90,90,90,90,90,null,90,90,90,91,90,90,90,90,90,90];
-	console.log("v %j",v);
-  //iM.rlEncode(v,false);
-	console.log("r %j",v);
-  iM.deltaEncode(v)
-	console.log("delta %j",v);
-  process.exit(0);
-}
-
-
 var ACCodingCost = function(canonical){    
     var verbose=false;
     var values = canonical.values;
@@ -141,30 +125,6 @@ var report = function(startStr,name,canonical,jsonRaw) {
   console.log(_.sprintf("%22s %10s %8d %8d %7.2f %7.2f %7.2f %7.0f %7d",startStr,name,canonical.values.length,canonicalJSON.length,ratio,bps,hB,lboundB,acCost));
 }
 
-var saveDay = function(canonical){
-    var db = new(cradle.Connection)().database('imetrical');
-    //canonical["_id"] = _.sprintf("daniel.%s",canonical.stamp);
-    //console.log("ca: %j",canonical);
-    var attach_json = JSON.stringify(canonical);
-    var values = canonical.values;
-    canonical.values=[];
-    canonical.ac={};
-    console.log('about to save: %j',attach_json.length);
-    db.save( _.sprintf("daniel.%s",canonical.stamp), canonical,function(err,rsp){
-        console.log('save %j',[err,rsp]);
-        db.saveAttachment( 
-            rsp.id, 
-            rsp.rev, 
-            'Delta.json',
-            'application/json', 
-            attach_json,
-            function( err, rsp ){
-                console.log('saveAttachment %j',[err,rsp]);
-                if (err) return;
-            }
-        );
-    });
-}
 var handleData = function(json,grain,startStr){
     //console.log('json:'+json);
     var data = JSON.parse(json);
@@ -204,43 +164,51 @@ var handleData = function(json,grain,startStr){
         values = iM.rlEncode(values);
         canonical.values = values;
         report(startStr,'RL',canonical,json);
-    }
-    
-    saveDay(canonical);
+    }    
 }
 
+function RLtoCanonical(rl){
+  var canonical = rl;
+  var values = canonical.values;
+  // un RL
+  canonical.values = values = iM.rlDecode(values);
+  console.log('+rl  %j..%j',values.slice(0,1000),values.slice(-5));
+  // un Delta
+  iM.deltaDecode(values);
+  console.log('+dlt %j..%j',values.slice(0,1000),values.slice(-5));
+  // un Q
+  iM.rangeStepDo(0,values.length,1,function(i){
+      values[i] = (values[i]===null)?null:(values[i]*canonical.Q);        
+  });
+  canonical.Q=1;
+  console.log('+Q %j..%j',values.slice(0,10),values.slice(-5));
+  
+  return canonical;
+}
 function doADay(offset,maxoffset) {
     var day = new Date();
     day.setUTCDate(day.getUTCDate()-offset);
     // Month+1 Really ?
     var dayStr = _.sprintf("%4d-%02d-%02d",day.getUTCFullYear(),day.getUTCMonth()+1,day.getUTCDate());
-    var table="watt"; // watt,watt_tensec,watt_minute,watt_hour
-    var grain=1;
-    var options = {
-        host: '192.168.5.2',
-        port: 80,
-        //path: '/iMetrical/getJSONForDay.php?day='+d_d+'&table='+table
-        path: '/iMetrical/getJSONForDay.php?offset='+offset+'&table='+table
-    };
     console.log('--- fetch offset %d --- %s ---',offset,dayStr);
-    http.get(options, function(res) {
-        var responseBody = '';
-        //console.log("Got response: " + res.statusCode);
-        res.addListener('data', function(chunk) {
-            responseBody += chunk;
-        });
-        res.addListener('end', function() {
-            handleData(responseBody,grain,dayStr+'T00:00:00Z');
-            if (offset<maxoffset-1){
-                setTimeout(function(){doADay(offset+1,maxoffset);},1);
-            }
-        });
-    }).on('error', function(e) {
-        console.log("Got error: " + e.message);
-    });
 
+    var db = new(cradle.Connection)().database('imetrical');
+    var stampStr = dayStr+'T00:00:00Z';
+    var key =  _.sprintf("daniel.%s",stampStr);
+    db.get(key+'/RL.json',function(err,rsp){
+      if (err) {
+        console.log('error: %j',name,err);
+      } else {
+        //handleData(responseBody,grain,stampStr);
+        var olen = rsp.values.length;
+        var canonical = RLtoCanonical(rsp);
+        console.log('fetched: %s: %d -> %d',rsp.stamp,olen,canonical.values.length);
+        if (offset<maxoffset-1){
+            //setTimeout(function(){doADay(offset+1,maxoffset);},1);
+        }
+      }
+    });
 }
 
-doADay(1,366);
-doADay(366,1080);
+doADay(1,1080);
 //doADay(1,20);//doADay(1,10);//doADay(10,20);
