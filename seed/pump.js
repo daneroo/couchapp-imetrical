@@ -1,12 +1,18 @@
-var sys=require('sys');
 var http=require('http');
-var util=require('util');
+var crypto = require('crypto');
 var _  = require('underscore');
 _.mixin(require('underscore.string'));
 var cradle = require('cradle');
 require.paths.unshift('.')
 var iM=require('iM');
 
+function sha1sum(s){
+  // if not a string, turn into json first
+  if (!_.isString(s) && !_.isNull(s)){
+    s = JSON.stringify(s);
+  }
+  return crypto.createHash('sha1').update(s).digest('hex');
+}
 
 // put values 'RL' into it own attachment
 var saveDay = function(canonical){
@@ -36,6 +42,10 @@ var saveDay = function(canonical){
     });
 }
 
+function metrics(canonical){
+  return {size:JSON.stringify(canonical).length, sha1sum:sha1sum(canonical.values)};
+}
+
 var handleData = function(json,grain,startStr){
     //console.log('json:'+json);
     var data = JSON.parse(json);
@@ -49,26 +59,26 @@ var handleData = function(json,grain,startStr){
         grain : grain,
         Q: Q,
         values : values,
-        sizes:{
-          raw:json.length
+        metrics:{
+          raw:{size:json.length,sha1sum:sha1sum(json)}
         }
     };
-    canonical.sizes.Q01=JSON.stringify(canonical).length
+    canonical.metrics.Q01=metrics(canonical);
 
     // Q10
     iM.rangeStepDo(0,values.length,1,function(i){
         values[i] = (values[i]===null)?null:Math.round(values[i]/Q);        
     });
-    canonical.sizes.Q10=JSON.stringify(canonical).length
+    canonical.metrics.Q10=metrics(canonical);
 
     // Delta
     iM.deltaEncode(values);
-    canonical.sizes.DLT=JSON.stringify(canonical).length
+    canonical.metrics.DLT=metrics(canonical);
 
     // Runlength
     values = iM.rlEncode(values);
     canonical.values = values;
-    canonical.sizes.RL=JSON.stringify(canonical).length
+    canonical.metrics.RL=metrics(canonical);
 
     saveDay(canonical);
 }
@@ -105,7 +115,7 @@ function doADay(offset,maxoffset) {
 
 }
 
-doADay(1,366);
-doADay(366,731);
-doADay(731,1080);
+doADay(1,1080);
+//doADay(366,731);
+//doADay(731,1080);
 //doADay(1,20);//doADay(1,10);//doADay(10,20);
