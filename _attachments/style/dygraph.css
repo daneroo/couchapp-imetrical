@@ -1,0 +1,21 @@
+.dygraph-label {
+  /* This applies to the title, x-axis label and y-axis label */
+  font-family: Arial, Helvetica, sans-serif;
+}
+.dygraph-title {
+  /* This rule only applies to the chart title */
+  font-size: 24px;
+  text-shadow: gray 2px 2px 2px;  /* color, delta-x, delta-y, blur radius */
+}
+.dygraph-ylabel {
+  /* This rule only applies to the y-axis label */
+  font-size: 18px;
+  text-shadow: gray -2px 2px 2px;  /* (offsets are in a rotated frame) */
+}
+/* can use this for chart wrappers themselves */
+.chart {
+  /*border: 1px dashed black;*/
+  margin: 5px;
+  padding: 2px;
+  width: 700px; height: 400px;
+}
