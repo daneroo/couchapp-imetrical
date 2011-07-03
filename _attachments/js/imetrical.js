@@ -94,8 +94,8 @@ var interactionModel = _.extend({},Dygraph.Interaction.defaultModel, {
 });
 
 function drawGraph(signal,dayStr){
-  //interceptPan();
-  values = signal.values;
+  var T = signal.T;
+  var values = signal.values;
   // safari bug - will not parse iso8601. 2011-07-01T23:45:32Z
   var parseable = signal.stamp.replace(/-/g,'/').replace("T",' ').replace('Z','');
   var stamp = new Date(parseable);
@@ -110,8 +110,8 @@ function drawGraph(signal,dayStr){
   if (values && values.length>0){
     for (var i=0;i<values.length;i++){
       var value = values[i];
-      if (/*value!==null &&*/ i%60==0) {
-        data.rows.push({c:[{v: new Date(start+i*1000)}, {v: value}]});
+      if (/*value!==null &&*/ i%10==0) {
+        data.rows.push({c:[{v: new Date(start+i*T*1000)}, {v: value}]});
       }
     }
   }

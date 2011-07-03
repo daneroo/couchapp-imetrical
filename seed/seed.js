@@ -124,7 +124,7 @@ var H = function(values){
 var report = function(startStr,name,canonical) {
   var canonicalJSON = JSON.stringify(canonical);
   var ratio = 0;//Math.round(100*jsonRaw.length/canonicalJSON.length)/100;
-  var bps = canonicalJSON.length/86400/canonical.grain;
+  var bps = canonicalJSON.length/86400/canonical.T;
   var hB=0;lboundB=0;
   if (canonical.values.length>0){
       hB = H(canonical.values)/8.0;
@@ -142,7 +142,7 @@ var handleData = function(canonical){
     var startStr = canonical.stamp;
     values = canonical.values;
     console.log(_.sprintf("%22s %10s %8s %8s %7s %7s %7s %7s %7s",'date','method','samples','size','ratio','Bps','H(x)','<bound','<ac+h'));
-    console.log(_.sprintf("%22s %10s %8d %8d %7.2f %7.2f",canonical.stamp,'raw',canonical.values.length,canonical.sizes.raw,1.0,canonical.sizes.raw/86400/canonical.grain));
+    console.log(_.sprintf("%22s %10s %8d %8d %7.2f %7.2f",canonical.stamp,'raw',canonical.values.length,canonical.sizes.raw,1.0,canonical.sizes.raw/86400/canonical.T));
     report(startStr,'canonical',canonical);
 
     // V10

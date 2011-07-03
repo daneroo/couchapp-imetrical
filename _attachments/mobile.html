@@ -1,0 +1,60 @@
+<!DOCTYPE html> 
+<html> 
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, minimum-scale=1, maximum-scale=1"> 
+    <title>iMetrical on Couch</title>
+    <link rel="stylesheet"  href="http://code.jquery.com/mobile/1.0b1/jquery.mobile-1.0b1.min.css" />  
+    <link rel="stylesheet" href="css/dygraph.css" type="text/css">
+</head>        
+<body> 
+<!--Here is a footer (${id} : ${header})-->
+    <script id="navbarItmTmpl" type="text/x-jquery-tmpl">
+    <li><a href="#${navid}" {{if id===navid}}class="ui-btn-active ui-state-persist"{{/if}} data-icon="${icon}">${label}</a></li>
+    </script>
+    <script id="footerTmpl" type="text/x-jquery-tmpl">
+        <div data-role="footer" data-id="footer1" data-position="fixed">
+            <div data-role="navbar">
+                <ul>
+                {{tmpl([
+                {id:id,navid:'home',icon:'home',label:'Home'},
+                {id:id,navid:'about',icon:'info',label:'About'},
+                {id:id,navid:'metrics',icon:'grid',label:'Metrics'},
+                {id:id,navid:'favs',icon:'star',label:'Favs'},
+                {id:id,navid:'help',icon:'gear',label:'Settings'}]) "navbarItmTmpl"}}                    
+                </ul>
+            </div><!-- /navbar -->
+        </div><!-- /footer -->
+    </script>
+    <script id="pageTmpl" type="text/x-jquery-tmpl">
+        <div data-role="page" id="${id}">
+            <div data-role="header" data-position="fixed">
+                <h1>${header}</h1>
+            </div>
+            <div data-role="content">
+              {{if $item.html().length>0 }}
+                  {{html $item.html()}}
+              {{else}}
+                Here is a brand new page (${id} : ${header})
+              {{/if}}
+            </div>
+            {{tmpl "footerTmpl"}}
+        </div>
+    </script>
+    <script id="homeTmpl" type="text/x-jquery-tmpl">
+        {{wrap({id:'home',header:'Axial Dashboard'}) "#pageTmpl"}}
+        <div data-type="horizontal" data-role="controlgroup">
+            <a href="#" id="prev" data-role="button">Prev</a>
+            <a href="#" id="zoom" data-role="button">Zoom</a>
+            <a href="#" id="next" data-role="button">Next</a>
+        </div>
+        <div id="chart">
+          <div class="chart" id="dygraph">BLABLABLA</div>
+        </div>
+        <div id="log"></div>
+        {{/wrap}}
+    </script>
+</body>
+<script type="text/javascript" src="js/mobileloader.js"></script>
+</html>
+

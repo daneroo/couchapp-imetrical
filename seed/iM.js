@@ -107,8 +107,8 @@ exports.rlDecode = function(values,verbose){
 }
 
 // convert [{w,s},{w,s}] (to {w:s,w:s}) to {s,[w,w,w,w]}
-// should we inject startStr,grain ?
-exports.rawToCanonical = function(json,startStr,grain,verbose){
+// should we inject startStr,T ?
+exports.rawToCanonical = function(json,startStr,T,verbose){
     data = JSON.parse(json);
 
     // should test that data is an [] array
@@ -124,7 +124,7 @@ exports.rawToCanonical = function(json,startStr,grain,verbose){
     });
     
     var values = [];
-    this.rangeStepDo(0,86400,grain,function(i){
+    this.rangeStepDo(0,86400,T,function(i){
         //console.log("-=-= "+i+" : "+stampToWatt[i]);
         var w = stampToWatt[i];
         w = (w===undefined)?null:w;

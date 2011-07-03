@@ -20,7 +20,7 @@ var saveDay = function(canonical){
     var key =  _.sprintf("daniel.%s",canonical.stamp);
     var RL = {
         stamp : canonical.stamp,
-        grain : canonical.grain,
+        T : canonical.T,
         Q: canonical.Q,
         values : canonical.values,
     };
@@ -42,21 +42,21 @@ var saveDay = function(canonical){
     });
 }
 
-function metrics(canonical){
-  return {size:JSON.stringify(canonical).length, sha1sum:sha1sum(canonical.values)};
+function metrics(signal){
+  return {size:JSON.stringify(signal).length, sha1sum:sha1sum(signal.values)};
 }
 
-var handleData = function(json,grain,startStr){
+var handleData = function(json,T,startStr){
     //console.log('json:'+json);
     var data = JSON.parse(json);
         
     var Q = 10; // value quantization
     console.log(_.sprintf("%22s %10s %8s %8s %7s %7s %7s %7s %7s",'date','method','samples','size','ratio','Bps','H(x)','<bound','<ac+h'));
-    console.log(_.sprintf("%22s %10s %8d %8d %7.2f %7.2f",startStr,'raw',data.length,json.length,1.0,json.length/86400/grain));
-    var values = iM.rawToCanonical(json,startStr,grain,false);
+    console.log(_.sprintf("%22s %10s %8d %8d %7.2f %7.2f",startStr,'raw',data.length,json.length,1.0,json.length/86400/T));
+    var values = iM.rawToCanonical(json,startStr,T,false);
     var canonical = {
         stamp : startStr,
-        grain : grain,
+        T : T,
         Q: Q,
         values : values,
         metrics:{
@@ -88,8 +88,8 @@ function doADay(offset,maxoffset) {
     day.setUTCDate(day.getUTCDate()-offset);
     // Month+1 Really ?
     var dayStr = _.sprintf("%4d-%02d-%02d",day.getUTCFullYear(),day.getUTCMonth()+1,day.getUTCDate());
-    var table="watt"; // watt,watt_tensec,watt_minute,watt_hour
-    var grain=1;
+    var table="watt_minute"; // watt,watt_tensec,watt_minute,watt_hour
+    var T=60;
     var options = {
         host: '192.168.5.2',
         port: 80,
@@ -104,7 +104,7 @@ function doADay(offset,maxoffset) {
             responseBody += chunk;
         });
         res.addListener('end', function() {
-            handleData(responseBody,grain,dayStr+'T00:00:00Z');
+            handleData(responseBody,T,dayStr+'T00:00:00Z');
             if (offset<maxoffset-1){
                 setTimeout(function(){doADay(offset+1,maxoffset);},1);
             }
