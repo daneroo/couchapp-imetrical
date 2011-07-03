@@ -32,11 +32,12 @@ function getChart(whichChart,app){
     // rl decode
     var values = signal.values;
     signal.values = values = rlDecode(values);
-    //if (true){console.log('+rl(%d)  %j..%j',values.length,values.slice(0,100),values.slice(-5));}
+    //if (true){console.log('+rl ',values.length,values.slice(0,100),values.slice(-5));}
     
     // Delta decode
     deltaDecode(signal.values);
-    //if (true){console.log('+dlt(%d)  %j..%j',values.length,values.slice(0,100),values.slice(-5));}
+    //if (true){console.log('+dlt ',values.length,values.slice(0,100),values.slice(-5));}
+
     // un Q
     for (var i=0;i<signal.values.length;i++){
         signal.values[i] = (signal.values[i]===null)?null:(signal.values[i]*signal.Q);        
@@ -95,7 +96,10 @@ var interactionModel = _.extend({},Dygraph.Interaction.defaultModel, {
 function drawGraph(signal,dayStr){
   //interceptPan();
   values = signal.values;
-  var stamp = new Date(signal.stamp);
+  // safari bug - will not parse iso8601. 2011-07-01T23:45:32Z
+  var parseable = signal.stamp.replace(/-/g,'/').replace("T",' ').replace('Z','');
+  var stamp = new Date(parseable);
+  
   var start = stamp.getTime();
   var data = {
     cols: [
@@ -106,7 +110,7 @@ function drawGraph(signal,dayStr){
   if (values && values.length>0){
     for (var i=0;i<values.length;i++){
       var value = values[i];
-      if (/*value!=null &&*/ i%60==0) {
+      if (/*value!==null &&*/ i%60==0) {
         data.rows.push({c:[{v: new Date(start+i*1000)}, {v: value}]});
       }
     }
