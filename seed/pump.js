@@ -15,25 +15,24 @@ function sha1sum(s){
 }
 
 // put values 'RL' into it own attachment
-var saveDay = function(canonical){
+var saveDay = function(signalT60,signalRL){
     var db = new(cradle.Connection)().database('imetrical');
-    var key =  _.sprintf("daniel.%s",canonical.stamp);
-    var RL = {
-        stamp : canonical.stamp,
-        T : canonical.T,
-        Q: canonical.Q,
-        values : canonical.values,
-    };
+    var key =  _.sprintf("daniel.%s",signalT60.stamp);
+    /*var RL = {
+        stamp : signal.stamp,
+        T : signal.T,
+        Q: signal.Q,
+        values : signal.values,
+    };*/
     // remove values from canonical
-    canonical.values=[];
-    db.save(key, canonical,function(err,rsp){
+    db.save(key, signalT60,function(err,rsp){
         console.log('saved %j',[err,rsp]);
         db.saveAttachment( 
             rsp.id, 
             rsp.rev, 
             'RL.json',
             'application/json', 
-            JSON.stringify(RL),
+            JSON.stringify(signalRL),
             function( err, rsp ){
                 console.log('saveAttachment %j',[err,rsp]);
                 if (err) return;
@@ -42,45 +41,70 @@ var saveDay = function(canonical){
     });
 }
 
+function resample(values,T){// subsample by T
+  var subsampled=[];
+  for (var i=0;i<values.length;i+=T){
+    var sum=null;
+    for (var j=0;j<T;j++){
+      if (values[i+j]!==null){
+        if (sum===null){sum=0;}
+        sum+=values[i+j];
+      }
+    }
+    var avg = (sum===null)?null:Math.round(sum/T);
+    subsampled.push(avg);
+  }
+  return subsampled;
+}
+
 function metrics(signal){
   return {size:JSON.stringify(signal).length, sha1sum:sha1sum(signal.values)};
 }
 
-var handleData = function(json,T,startStr){
+var processRawDay = function(json,T,startStr){
     //console.log('json:'+json);
     var data = JSON.parse(json);
         
-    var Q = 10; // value quantization
     console.log(_.sprintf("%22s %10s %8s %8s %7s %7s %7s %7s %7s",'date','method','samples','size','ratio','Bps','H(x)','<bound','<ac+h'));
     console.log(_.sprintf("%22s %10s %8d %8d %7.2f %7.2f",startStr,'raw',data.length,json.length,1.0,json.length/86400/T));
     var values = iM.rawToCanonical(json,startStr,T,false);
-    var canonical = {
+    var signal = {
         stamp : startStr,
         T : T,
-        Q: Q,
-        values : values,
+        Q: 10,
+        values : values
+    };
+    var valuesT60 = resample(values,60);
+    var signalT60 = {
+        stamp : startStr,
+        T : 60,
+        Q: 1,
+        values : valuesT60,
         metrics:{
           raw:{size:json.length,sha1sum:sha1sum(json)}
         }
     };
-    canonical.metrics.Q01=metrics(canonical);
+    
+    signalT60.metrics.Q01=metrics(signal);
 
     // Q10
+    var Q = 10; // value quantization
     iM.rangeStepDo(0,values.length,1,function(i){
         values[i] = (values[i]===null)?null:Math.round(values[i]/Q);        
     });
-    canonical.metrics.Q10=metrics(canonical);
+    signalT60.metrics.Q10=metrics(signal);
 
     // Delta
     iM.deltaEncode(values);
-    canonical.metrics.DLT=metrics(canonical);
+    signalT60.metrics.DLT=metrics(signal);
 
     // Runlength
     values = iM.rlEncode(values);
-    canonical.values = values;
-    canonical.metrics.RL=metrics(canonical);
+    signal.values = values;
+    
+    signalT60.metrics.RL=metrics(signal);
 
-    saveDay(canonical);
+    saveDay(signalT60,signal);
 }
 
 function doADay(offset,maxoffset) {
@@ -88,8 +112,8 @@ function doADay(offset,maxoffset) {
     day.setUTCDate(day.getUTCDate()-offset);
     // Month+1 Really ?
     var dayStr = _.sprintf("%4d-%02d-%02d",day.getUTCFullYear(),day.getUTCMonth()+1,day.getUTCDate());
-    var table="watt_minute"; // watt,watt_tensec,watt_minute,watt_hour
-    var T=60;
+    var table="watt"; // watt,watt_tensec,watt_minute,watt_hour
+    var T=1;
     var options = {
         host: '192.168.5.2',
         port: 80,
@@ -104,7 +128,7 @@ function doADay(offset,maxoffset) {
             responseBody += chunk;
         });
         res.addListener('end', function() {
-            handleData(responseBody,T,dayStr+'T00:00:00Z');
+            processRawDay(responseBody,T,dayStr+'T00:00:00Z');
             if (offset<maxoffset-1){
                 setTimeout(function(){doADay(offset+1,maxoffset);},1);
             }
