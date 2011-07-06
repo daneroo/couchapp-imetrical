@@ -10,6 +10,11 @@ Credentials are in `~/.couchapp.conf`.
 
     couchapp push . imetrical
 
+## Handling timezones from a list function
+This is the begining of a list function:
+
+    curl 'http://127.0.0.1:5984/imetrical/_design/couchapp-imetrical/_list/timezone/power'
+
 ## Entropy Coding - Compact representation
     Raw              1741938786 : 1.6G ratio:  1.0
     Canonical         263159906 : 251M ratio:  6.6
@@ -52,7 +57,7 @@ Make use of curls' `--silent/-s`,`--output/-o`, `-H`, and `--http1.0/-0`
     curl -s -o /dev/null -0 -H "Accept-Encoding: gzip,deflate" --write-out "size=%{size_download}\n" $URL
     # size=15687
     
-### Dependancies
+### Dependencies
 The seeding script has now been rewritten in `node.js` `javascript`.
 It now requires a few dependancies:
 
