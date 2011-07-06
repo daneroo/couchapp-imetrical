@@ -24,25 +24,28 @@ function getChart(whichChart,app){
   console.log('whichChart',whichChart,utcs(iMChartDate));
   //var url = app.db.uri+'daniel.'+dayStr+'T00:00:00Z/AC.json';
   //var url = app.db.uri+'daniel.'+dayStr+'T00:00:00Z/Delta.json';
-  var url = app.db.uri+'daniel.'+dayStr+'T00:00:00Z/RL.json';
+  //var url = app.db.uri+'daniel.'+dayStr+'T00:00:00Z/RL.json';
+  var url = app.db.uri+'daniel.'+dayStr+'T00:00:00Z';
   console.log('url',url);
 
-
+  var doRL=false;
   $.getJSON(url, function(signal) {
     // rl decode
-    var values = signal.values;
-    signal.values = values = rlDecode(values);
-    //if (true){console.log('+rl ',values.length,values.slice(0,100),values.slice(-5));}
-    
-    // Delta decode
-    deltaDecode(signal.values);
-    //if (true){console.log('+dlt ',values.length,values.slice(0,100),values.slice(-5));}
+    if (doRL){
+      var values = signal.values;
+      signal.values = values = rlDecode(values);
+      //if (true){console.log('+rl ',values.length,values.slice(0,100),values.slice(-5));}
 
-    // un Q
-    for (var i=0;i<signal.values.length;i++){
+      // Delta decode
+      deltaDecode(signal.values);
+      //if (true){console.log('+dlt ',values.length,values.slice(0,100),values.slice(-5));}
+
+      // un Q
+      for (var i=0;i<signal.values.length;i++){
         signal.values[i] = (signal.values[i]===null)?null:(signal.values[i]*signal.Q);        
+      }
+      signal.Q=1;
     }
-    signal.Q=1;
     drawGraph(signal,dayStr);
   });  
 }
